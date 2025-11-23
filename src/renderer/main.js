@@ -12,6 +12,9 @@ import { router } from "./core/router.js";
 import { App } from "./core/app.js";
 import "./core/integration.js";
 
+// Error Handler Global
+import { setupGlobalErrorHandlers } from "./utils/error-handler.js";
+
 // Servicios
 import "./services/database.service.js";
 import { authService } from "./services/auth.service.js";
@@ -92,6 +95,9 @@ function showScreen(screenId) {
 }
 
 async function initialize() {
+  // Configurar error handlers globales
+  setupGlobalErrorHandlers();
+
   const isAuthenticated = authService.isAuthenticated();
 
   if (isAuthenticated) {
@@ -101,7 +107,7 @@ async function initialize() {
   } else {
     showScreen("login-screen");
     // Inicializa la lógica de la pantalla de login
-    const { LoginView } = await import('./modules/login/login.view.js');
+    const { LoginView } = await import("./modules/login/login.view.js");
     LoginView.init();
   }
 }

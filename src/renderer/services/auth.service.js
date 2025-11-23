@@ -10,6 +10,10 @@ export class AuthService {
   constructor() {
     this.currentUser = null;
     this.currentCaja = null;
+    // Rate limiting para prevenir ataques de fuerza bruta
+    this.loginAttempts = new Map(); // username -> { count, lastAttempt, blockedUntil }
+    this.MAX_ATTEMPTS = 5;
+    this.BLOCK_DURATION = 15 * 60 * 1000; // 15 minutos en milisegundos
   }
 
   /**
@@ -21,24 +25,51 @@ export class AuthService {
    */
   async login(username, password, cajaId) {
     try {
+      // Verificar si el usuario está bloqueado por intentos fallidos
+      const blockStatus = this.checkLoginBlock(username);
+      if (blockStatus.blocked) {
+        const minutesLeft = Math.ceil(blockStatus.timeLeft / 60000);
+        throw new Error(
+          `Usuario bloqueado temporalmente. Intente nuevamente en ${minutesLeft} minuto(s).`
+        );
+      }
+
+      // Validar que se proporcionen credenciales
+      if (!username || !password) {
+        throw new Error("Usuario y contraseña son requeridos");
+      }
+
+      // Buscar usuario en la base de datos
       const users = await api.dbQuery(
         "SELECT * FROM usuarios WHERE username = ? AND activo = 1",
         [username]
       );
 
       if (users.length === 0) {
-        throw new Error("Usuario no encontrado");
+        this.recordFailedAttempt(username);
+        throw new Error("Usuario o contraseña incorrectos");
       }
 
       const user = users[0];
 
-      // Verificar contraseña (desarrollo: 'password' sin hash, producción: bcrypt)
-      const isValidPassword =
-        password === "password" ||
-        (await bcrypt.compare(password, user.password));
+      // Verificar contraseña usando bcrypt
+      const isValidPassword = await bcrypt.compare(password, user.password);
 
       if (!isValidPassword) {
-        throw new Error("Contraseña incorrecta");
+        this.recordFailedAttempt(username);
+        const attemptsLeft = this.MAX_ATTEMPTS - this.getAttemptCount(username);
+
+        if (attemptsLeft > 0) {
+          throw new Error(
+            `Contraseña incorrecta. Le quedan ${attemptsLeft} intento(s).`
+          );
+        } else {
+          throw new Error(
+            `Demasiados intentos fallidos. Usuario bloqueado por ${
+              this.BLOCK_DURATION / 60000
+            } minutos.`
+          );
+        }
       }
 
       // Obtener caja
@@ -48,6 +79,9 @@ export class AuthService {
       if (cajas.length === 0) {
         throw new Error("Caja no encontrada");
       }
+
+      // Login exitoso - limpiar intentos fallidos
+      this.clearLoginAttempts(username);
 
       this.currentUser = user;
       this.currentCaja = cajas[0];
@@ -145,6 +179,83 @@ export class AuthService {
     if (user) {
       console.log("✅ Sesión restaurada:", user.username);
     }
+  }
+
+  /**
+   * Verifica si un usuario está bloqueado por intentos fallidos
+   * @param {string} username - Nombre de usuario
+   * @returns {Object} Estado de bloqueo { blocked, timeLeft }
+   */
+  checkLoginBlock(username) {
+    const attempts = this.loginAttempts.get(username);
+
+    if (!attempts) {
+      return { blocked: false, timeLeft: 0 };
+    }
+
+    const now = Date.now();
+
+    // Si hay un bloqueo activo
+    if (attempts.blockedUntil && attempts.blockedUntil > now) {
+      return {
+        blocked: true,
+        timeLeft: attempts.blockedUntil - now,
+      };
+    }
+
+    // Si el bloqueo expiró, limpiar
+    if (attempts.blockedUntil && attempts.blockedUntil <= now) {
+      this.clearLoginAttempts(username);
+      return { blocked: false, timeLeft: 0 };
+    }
+
+    return { blocked: false, timeLeft: 0 };
+  }
+
+  /**
+   * Registra un intento de login fallido
+   * @param {string} username - Nombre de usuario
+   */
+  recordFailedAttempt(username) {
+    const now = Date.now();
+    const attempts = this.loginAttempts.get(username) || {
+      count: 0,
+      lastAttempt: now,
+      blockedUntil: null,
+    };
+
+    attempts.count++;
+    attempts.lastAttempt = now;
+
+    // Si alcanzó el máximo de intentos, bloquear
+    if (attempts.count >= this.MAX_ATTEMPTS) {
+      attempts.blockedUntil = now + this.BLOCK_DURATION;
+      console.warn(
+        `Usuario ${username} bloqueado por ${
+          this.BLOCK_DURATION / 60000
+        } minutos`
+      );
+    }
+
+    this.loginAttempts.set(username, attempts);
+  }
+
+  /**
+   * Obtiene el número de intentos fallidos de un usuario
+   * @param {string} username - Nombre de usuario
+   * @returns {number} Número de intentos
+   */
+  getAttemptCount(username) {
+    const attempts = this.loginAttempts.get(username);
+    return attempts ? attempts.count : 0;
+  }
+
+  /**
+   * Limpia los intentos de login de un usuario
+   * @param {string} username - Nombre de usuario
+   */
+  clearLoginAttempts(username) {
+    this.loginAttempts.delete(username);
   }
 }
 

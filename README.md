@@ -1,171 +1,453 @@
-# 🏦 ERP Multicajas RD - Sistema de Gestión Empresarial Integrado
+# ERP Multicajas RD
 
-![ERP Multicajas RD Logo](https://raw.githubusercontent.com/fborjaz/ERP_MulriCaja/main/assets/icon.png)
+Sistema de Gestión Empresarial (ERP) completo para República Dominicana, desarrollado con Electron y SQLite.
 
-Un sistema ERP (Enterprise Resource Planning) completo y moderno, diseñado específicamente para la gestión de múltiples cajas y operaciones comerciales en República Dominicana. Desarrollado con Electron, ofrece una experiencia de aplicación de escritorio rápida y fiable, con una base de datos embebida SQLite.
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
+![License](https://img.shields.io/badge/license-ISC-green.svg)
 
----
+## 📋 Descripción
 
-## ✨ Características Principales
+**ERP Multicajas RD** es una aplicación de escritorio robusta y completa diseñada específicamente para empresas en República Dominicana. Incluye todos los módulos necesarios para la gestión empresarial moderna:
 
-*   **Gestión de Ventas (Punto de Venta - POS):**
-    *   Búsqueda rápida de productos.
-    *   Registro de ventas con múltiples métodos de pago.
-    *   Cálculo automático de ITBIS.
-    *   Impresión de facturas (funcionalidad a implementar).
-*   **Inventario:**
-    *   Control de stock actual y mínimo.
-    *   Identificación de productos bajo stock.
-    *   Valoración del inventario (costo y venta).
-*   **Clientes:**
-    *   Registro y gestión de información de clientes.
-*   **Compras:**
-    *   Registro de compras a proveedores.
-*   **Despachos:**
-    *   Gestión y seguimiento de entregas y conductores.
-*   **Apartados y Cotizaciones:**
-    *   Control de productos apartados y generación de cotizaciones.
-*   **Contabilidad Básica:**
-    *   Registro de asientos contables.
-    *   Generación de reportes contables (Libro Diario, Libro Mayor, Balance de Comprobación - funcionalidad en desarrollo).
-*   **Notas de Crédito:**
-    *   Emisión y gestión de notas de crédito.
-*   **Configuración:**
-    *   Gestión de la información de la empresa.
-    *   Funciones de backup y restauración de la base de datos.
-*   **Reportes:**
-    *   Generación de diversos reportes (ventas, inventario, clientes, financieros).
-*   **Base de Datos Embebida:** Utiliza SQLite para una fácil implementación y portabilidad.
+- ✅ Punto de Venta (POS) multi-caja
+- ✅ Gestión de Inventario
+- ✅ Facturación Electrónica con cumplimiento DGII
+- ✅ Contabilidad integrada
+- ✅ Recursos Humanos y Nómina
+- ✅ Reportes DGII (606, 607, 608, 609)
+- ✅ Inteligencia Artificial para recomendaciones
+- ✅ Base de datos embebida (sin servidor)
 
 ---
 
-## 🚀 Tecnologías Utilizadas
+## 🎯 Características Principales
 
-Este proyecto combina la potencia de las tecnologías web modernas con la capacidad de ejecución de aplicaciones de escritorio:
+### Gestión Comercial
 
-*   **[Electron](https://www.electronjs.org/):** Framework para construir aplicaciones de escritorio con JavaScript, HTML y CSS.
-*   **[Vite](https://vitejs.dev/):** Empaquetador de próxima generación para un desarrollo frontend rápido.
-*   **[Node.js](https://nodejs.org/):** Entorno de ejecución de JavaScript en el lado del servidor y para el proceso principal de Electron.
-*   **[SQLite3](https://www.sqlite.org/):** Base de datos ligera y embebida para almacenar toda la información del ERP.
-*   **JavaScript:** Lenguaje principal de programación.
-*   **HTML5 / CSS3:** Para la estructura y estilos de la interfaz de usuario.
-*   **`better-sqlite3`:** Driver de SQLite de alto rendimiento para Node.js.
-*   **`bcryptjs`:** Librería para el hashing de contraseñas.
-*   **`electron-store`:** Persistencia simple de datos de usuario en Electron.
-*   **`jspdf` / `xlsx` / `qrcode`:** Librerías para generación de PDFs, hojas de cálculo y códigos QR (funcionalidades de exportación/impresión).
-*   **`moment`:** Librería para manejo de fechas.
-*   **`openai`:** Integración potencial con IA (si se usa).
+- **Punto de Venta**: Interfaz rápida e intuitiva para ventas
+- **Productos**: Control completo de inventario con códigos de barras
+- **Clientes**: Gestión de clientes con RNC, límites de crédito
+- **Proveedores**: Administración de proveedores y compras
+
+### Facturación Electrónica
+
+- **NCF Automáticos**: Generación de Números de Comprobante Fiscal
+- **Tipos de Comprobantes**: B01, B02, B14, B15
+- **Validación RNC**: Validación automática de RNC
+- **XML para DGII**: Exportación en formato requerido
+
+### Reportes DGII
+
+- **606**: Reporte de Compras
+- **607**: Reporte de Ventas
+- **608**: Reporte de Cancelaciones
+- **609**: Reporte de Operaciones con Exterior
+- **Formatos**: TXT, CSV, Excel, PDF
+
+### Operaciones Especiales
+
+- **Apartados**: Reserva de productos con pagos parciales
+- **Cotizaciones**: Generación y seguimiento de cotizaciones
+- **Despachos**: Control de entregas con conductores
+- **Notas de Crédito**: Devoluciones y ajustes
+
+### Contabilidad
+
+- **Asientos Contables**: Registro de transacciones
+- **Balance General**: Estados financieros
+- **Estado de Resultados**: P&L automático
+- **Integración**: Sincronización automática con ventas/compras
+
+### Recursos Humanos
+
+- **Empleados**: Gestión completa de personal
+- **Nómina**: Cálculo automático de salarios
+- **Deducciones**: AFP, SFS, ISR automáticos
+- **Recibos**: Generación de recibos de pago
+
+### Inteligencia Artificial
+
+- **Recomendaciones de Compra**: Basadas en historial de ventas
+- **Predicción de Demanda**: Análisis de tendencias
+- **Optimización de Precios**: Sugerencias de precios óptimos
+- **Análisis de Tendencias**: Productos y categorías más vendidos
 
 ---
 
-## 📋 Requisitos del Sistema
+## 💻 Requisitos del Sistema
 
-Para ejecutar este proyecto en tu entorno de desarrollo, necesitas tener instalado:
+### Mínimos
 
-*   **[Node.js](https://nodejs.org/en/download/)** (versión LTS recomendada, v18 o superior).
-*   **[npm](https://www.npmjs.com/)** (viene con Node.js) o **[Yarn](https://yarnpkg.com/install)** (gestor de paquetes alternativo).
-*   **[Git](https://git-scm.com/downloads)** (para clonar el repositorio).
+- **Sistema Operativo**: Windows 10 (64-bit) o superior
+- **Procesador**: Intel Core i3 o equivalente
+- **RAM**: 4 GB
+- **Espacio en Disco**: 500 MB
+- **Resolución**: 1280x720
 
----
+### Recomendados
 
-## 📦 Instalación
-
-Sigue estos pasos para configurar el proyecto en tu máquina local:
-
-1.  **Clona el repositorio:**
-    ```bash
-    git clone https://github.com/fborjaz/ERP_MulriCaja.git
-    cd ERP_MulriCaja/erp_multicajas_rd/desktop
-    ```
-    (Asegúrate de cambiar al subdirectorio `erp_multicajas_rd/desktop` si la estructura de tu clonación lo requiere).
-
-2.  **Instala las dependencias:**
-    ```bash
-    npm install
-    # o si usas Yarn:
-    # yarn install
-    ```
+- **Sistema Operativo**: Windows 11 (64-bit)
+- **Procesador**: Intel Core i5 o superior
+- **RAM**: 8 GB o más
+- **Espacio en Disco**: 1 GB
+- **Resolución**: 1920x1080 o superior
 
 ---
 
-## ▶️ Ejecución del Proyecto
+## 📥 Instalación
 
-### Modo Desarrollo
+### Instalación desde Ejecutable (Recomendado)
 
-Para ejecutar la aplicación en modo desarrollo (con recarga en caliente y herramientas de desarrollo de Electron):
+1. Descargue el instalador `ERP Multicajas RD Setup 1.0.0.exe`
+2. Ejecute el instalador
+3. Siga las instrucciones del asistente de instalación
+4. Seleccione la carpeta de instalación (por defecto: `C:\Program Files\ERP Multicajas RD`)
+5. Marque "Crear acceso directo en el escritorio" si lo desea
+6. Haga clic en "Instalar"
+7. Una vez completada la instalación, haga clic en "Finalizar"
+
+El sistema se configurará automáticamente para iniciar con Windows.
+
+### Instalación para Desarrollo
 
 ```bash
+# Clonar el repositorio
+git clone https://github.com/fborjaz/ERP_MulriCaja.git
+cd ERP_MulriCaja
+
+# Instalar dependencias
+npm install
+
+# Iniciar en modo desarrollo
 npm run dev
-# o si usas Yarn:
-# yarn dev
-```
 
-### Construcción (Build) para Producción
+# Compilar para producción
+npm run build
 
-Para compilar la aplicación y generar los archivos de instalación (para Windows, macOS o Linux):
-
-1.  **Compilar la aplicación:**
-    ```bash
-    npm run build
-    # o si usas Yarn:
-    # yarn build
-    ```
-    Esto generará los archivos compilados en el directorio `out/`.
-
-2.  **Generar Instalador (Windows):**
-    ```bash
-    npm run build:win
-    # o si usas Yarn:
-    # yarn build:win
-    ```
-    El instalador (`.exe`) se encontrará en el directorio `dist/`.
-
----
-
-## 📂 Estructura del Proyecto
-
-El proyecto sigue una estructura limpia y modular, separando claramente el proceso principal de Electron del proceso de renderizado (UI):
-
-```
-.
-├── electron/                 # 📂 Configuración del proceso principal de Electron
-│   ├── main.js               #    - Punto de entrada principal
-│   ├── preload.js            #    - Script para inyectar APIs de forma segura al renderer
-│   └── ipc/                  #    - Manejadores de comunicación interproceso (IPC)
-├── src/                      # 🏗️ Código fuente de la aplicación (Frontend)
-│   ├── renderer/             #    - Código del proceso de renderizado (UI)
-│   │   ├── core/             #       - Lógica central de la app (router, api bridge)
-│   │   ├── components/       #       - Componentes reutilizables de UI (modals, toasts)
-│   │   ├── modules/          #       - Vistas y lógica de cada módulo (ventas, productos, etc.)
-│   │   ├── services/         #       - Servicios frontend (auth, db, print)
-│   │   └── utils/            #       - Funciones de utilidad (helpers, validators)
-│   └── styles/               #    - Hojas de estilo globales y específicas
-├── database/                 # 🗄️ Archivos de esquema y migración de la base de datos (SQLite)
-│   └── schema.sql            #    - Definición de la estructura de la base de datos
-├── assets/                   # 🖼️ Recursos estáticos (iconos, imágenes)
-├── build/                    # ⚙️ Archivos de configuración para el compilador (electron-builder)
-├── index.html                # 🌐 Archivo HTML principal del renderizador
-├── package.json              # 📄 Configuración del proyecto y scripts
-└── README.md                 # 📜 Este archivo
+# Crear instalador
+npm run build:win
 ```
 
 ---
 
-## 🤝 Contribuciones
+## 🚀 Configuración Inicial
 
-Las contribuciones son bienvenidas. Si encuentras un error o tienes una sugerencia de mejora, por favor, abre un "Issue" o envía un "Pull Request" al repositorio.
+### Primer Inicio
+
+1. **Inicio de Sesión**
+
+   - Usuario por defecto: `admin`
+   - Contraseña por defecto: `admin` (cámbiela inmediatamente)
+   - Seleccione la caja: `Caja Principal`
+
+2. **Configuración de Empresa**
+
+   - Vaya a **Configuración** → **Datos de la Empresa**
+   - Complete:
+     - Nombre de la empresa
+     - RNC
+     - Dirección
+     - Teléfono
+     - Email
+     - Logo (opcional)
+
+3. **Configuración de Impuestos**
+
+   - Vaya a **Configuración** → **Impuestos**
+   - Verifique el ITBIS (por defecto: 18%)
+   - Configure otros impuestos si aplica
+
+4. **Configuración de NCF**
+
+   - Vaya a **Configuración** → **Facturación Electrónica**
+   - Configure las secuencias de NCF:
+     - B01 (Crédito Fiscal)
+     - B02 (Consumidor Final)
+     - B14 (Régimen Especial)
+     - B15 (Gubernamental)
+
+5. **Crear Usuarios**
+
+   - Vaya a **Configuración** → **Usuarios**
+   - Cree usuarios para cada empleado
+   - Asigne roles: Administrador, Vendedor, Supervisor
+
+6. **Configurar Cajas**
+   - Vaya a **Configuración** → **Cajas**
+   - Agregue las cajas necesarias
+   - Asigne cajas a usuarios
+
+---
+
+## 📖 Guía de Uso Básico
+
+### Realizar una Venta
+
+1. Inicie sesión y seleccione su caja
+2. Vaya al módulo **Ventas** (o presione `F2`)
+3. Busque el producto por código, nombre o código de barras
+4. Ingrese la cantidad y haga clic en "Agregar"
+5. Repita para todos los productos
+6. Seleccione el método de pago (Efectivo, Tarjeta, Transferencia)
+7. Si es efectivo, ingrese el monto recibido
+8. Haga clic en "Procesar Venta"
+9. La factura se imprimirá automáticamente
+
+### Agregar un Producto
+
+1. Vaya al módulo **Productos** (o presione `F3`)
+2. Haga clic en "Nuevo Producto"
+3. Complete la información:
+   - Código (único)
+   - Nombre
+   - Categoría
+   - Precio de costo
+   - Precio de venta
+   - Stock inicial
+   - Stock mínimo
+   - Código de barras (opcional)
+4. Haga clic en "Guardar"
+
+### Crear un Cliente
+
+1. Vaya al módulo **Clientes**
+2. Haga clic en "Nuevo Cliente"
+3. Complete:
+   - Nombre
+   - RNC o Cédula
+   - Teléfono
+   - Email
+   - Dirección
+   - Límite de crédito (opcional)
+4. Haga clic en "Guardar"
+
+### Generar Reporte DGII
+
+1. Vaya al módulo **Reportes**
+2. Seleccione el tipo de reporte (606, 607, 608, 609)
+3. Seleccione el mes y año
+4. Haga clic en "Generar Reporte"
+5. Seleccione el formato de exportación (TXT, CSV, Excel, PDF)
+6. El archivo se guardará en la ubicación seleccionada
+
+### Realizar Backup
+
+1. Vaya a **Configuración** → **Backup y Restauración**
+2. Haga clic en "Crear Backup"
+3. Seleccione la ubicación donde guardar el backup
+4. El sistema creará una copia de la base de datos
+
+**Recomendación**: Realice backups diarios y guárdelos en una ubicación externa.
+
+---
+
+## 🔧 Módulos del Sistema
+
+### Dashboard
+
+Vista general con estadísticas del día, productos bajo stock y métricas clave.
+
+### Ventas
+
+Punto de venta completo con búsqueda rápida, carrito dinámico y múltiples métodos de pago.
+
+### Productos
+
+Gestión completa de productos, categorías, precios y stock.
+
+### Clientes
+
+Administración de clientes con historial de compras y límites de crédito.
+
+### Compras
+
+Registro de compras a proveedores con actualización automática de inventario.
+
+### Inventario
+
+Control de stock, movimientos, ajustes y alertas de stock bajo.
+
+### Facturación
+
+Generación de facturas con NCF, validación de RNC y exportación de XML.
+
+### Reportes
+
+Reportes DGII (606, 607, 608, 609) y reportes gerenciales personalizados.
+
+### Despachos
+
+Gestión de entregas con asignación de conductores y seguimiento.
+
+### Apartados
+
+Reserva de productos con sistema de abonos y conversión a venta.
+
+### Cotizaciones
+
+Creación de cotizaciones con conversión a venta y seguimiento de vencimiento.
+
+### Contabilidad
+
+Asientos contables, balance general, estado de resultados y libro mayor.
+
+### Notas de Crédito
+
+Emisión de notas de crédito por devoluciones o ajustes.
+
+### RRHH
+
+Gestión de empleados, nómina, deducciones y recibos de pago.
+
+### Configuración
+
+Configuración general del sistema, usuarios, cajas, impuestos y NCF.
+
+---
+
+## ⌨️ Atajos de Teclado
+
+- `F1` - Dashboard
+- `F2` - Ventas
+- `F3` - Productos
+- `Ctrl + S` - Guardar (en formularios)
+- `Esc` - Cerrar modal
+
+---
+
+## 🔒 Seguridad
+
+### Características de Seguridad
+
+- ✅ **Autenticación**: Login con usuario y contraseña
+- ✅ **Encriptación**: Contraseñas hasheadas con bcrypt
+- ✅ **Rate Limiting**: Protección contra fuerza bruta (5 intentos, bloqueo 15 min)
+- ✅ **Roles**: Control de acceso por rol (Administrador, Vendedor, Supervisor)
+- ✅ **Auditoría**: Logs de operaciones críticas
+- ✅ **Backup**: Sistema de respaldo integrado
+
+### Recomendaciones
+
+1. **Cambie la contraseña por defecto** inmediatamente
+2. **Realice backups diarios** en ubicación externa
+3. **Use contraseñas fuertes** (mínimo 8 caracteres, mayúsculas, números)
+4. **Asigne roles apropiados** a cada usuario
+5. **Revise los logs** periódicamente
+
+---
+
+## 🐛 Troubleshooting
+
+### La aplicación no inicia
+
+**Solución**:
+
+1. Verifique que cumple los requisitos mínimos del sistema
+2. Ejecute como Administrador
+3. Reinstale la aplicación
+4. Verifique el antivirus (puede estar bloqueando)
+
+### Error de base de datos
+
+**Solución**:
+
+1. Cierre completamente la aplicación
+2. Restaure desde un backup reciente
+3. Si persiste, contacte soporte
+
+### No imprime facturas
+
+**Solución**:
+
+1. Verifique que la impresora esté conectada y encendida
+2. Configure la impresora por defecto en Windows
+3. Vaya a Configuración → Impresión y verifique la configuración
+
+### Problemas con NCF
+
+**Solución**:
+
+1. Verifique que las secuencias estén configuradas correctamente
+2. Asegúrese de tener NCF disponibles
+3. Verifique la fecha de vencimiento de los NCF
+
+### Aplicación lenta
+
+**Solución**:
+
+1. Realice un backup y restaure la base de datos
+2. Cierre otras aplicaciones que consuman recursos
+3. Verifique el espacio en disco disponible
+4. Considere actualizar el hardware
+
+---
+
+## 👨‍💻 Desarrollo
+
+### Estructura del Proyecto
+
+```
+desktop/
+├── electron/          # Proceso principal de Electron
+├── src/
+│   ├── main/         # Código del proceso principal
+│   ├── renderer/     # Código del renderer
+│   └── styles/       # Estilos CSS
+├── database/         # Esquemas SQL
+└── assets/           # Recursos estáticos
+```
+
+### Tecnologías Utilizadas
+
+- **Electron** 39.2.3 - Framework desktop
+- **Vite** 7.2.4 - Build tool
+- **better-sqlite3** 12.4.6 - Base de datos
+- **bcryptjs** 2.4.3 - Encriptación
+- **jsPDF** 2.5.1 - Generación de PDF
+- **xlsx** 0.18.5 - Exportación Excel
+
+### Scripts Disponibles
+
+```bash
+npm run dev              # Modo desarrollo
+npm run build            # Compilar
+npm run start            # Iniciar compilado
+npm run build:win        # Crear instalador Windows
+npm run dist             # Crear distribución
+```
+
+### Contribuir
+
+1. Fork el proyecto
+2. Cree una rama para su feature (`git checkout -b feature/AmazingFeature`)
+3. Commit sus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abra un Pull Request
+
+---
+
+## 📞 Soporte
+
+Para soporte técnico o consultas:
+
+- **Email**: soporte@erpmulticajas.com
+- **Teléfono**: (809) 555-1234
+- **Horario**: Lunes a Viernes, 8:00 AM - 6:00 PM
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto está bajo la licencia [ISC](https://opensource.org/licenses/ISC). Consulta el archivo `LICENSE` para más detalles.
+ISC License - Copyright (c) 2025 ERP Multicajas RD
 
 ---
 
-## ✉️ Contacto
+## 🙏 Agradecimientos
 
-Para cualquier consulta o comentario, puedes contactar al mantenedor del proyecto:
+Desarrollado con ❤️ para empresas dominicanas.
 
-*   **Autor:** [fborjaz](https://github.com/fborjaz)
-*   **Repositorio:** [ERP_MulriCaja](https://github.com/fborjaz/ERP_MulriCaja)
+---
+
+**Versión**: 1.0.0  
+**Última actualización**: Noviembre 2025
