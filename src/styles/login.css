@@ -1,0 +1,179 @@
+/* Estilos para la Pantalla de Login */
+
+.login-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  /* Fondo con gradiente sutil y moderno */
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  overflow: hidden;
+}
+
+.login-container {
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 3.5rem;
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-2xl);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  transform: translateY(20px);
+  opacity: 0;
+  animation: slide-up-fade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slide-up-fade {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.login-header {
+  margin-bottom: 2.5rem;
+  opacity: 0;
+  animation: fade-in 0.5s ease-out 0.2s forwards;
+}
+
+.login-header h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.login-header p {
+  font-size: 1rem;
+  color: var(--gray-500);
+  margin-top: 0.5rem;
+}
+
+#login-form .form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+  opacity: 0;
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+#login-form .form-group:nth-child(1) {
+  animation-delay: 0.3s;
+}
+#login-form .form-group:nth-child(2) {
+  animation-delay: 0.4s;
+}
+#login-form .form-group:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+#login-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--gray-700);
+}
+
+#login-form input,
+#login-form select {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid var(--gray-200); /* Borde más visible por defecto */
+  border-radius: var(--border-radius-lg);
+  background-color: #fff;
+  color: var(--gray-900);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+#login-form input:hover,
+#login-form select:hover {
+  border-color: var(--gray-400);
+}
+
+#login-form input:focus,
+#login-form select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px var(--primary-light);
+  transform: translateY(-1px);
+}
+
+#login-form .btn {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: var(--border-radius-lg);
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  opacity: 0;
+  animation: fade-in 0.5s ease-out 0.6s forwards;
+  box-shadow: var(--shadow-md);
+}
+
+#login-form .btn:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+#login-form .btn:active {
+  transform: translateY(0);
+}
+
+.error-message {
+  background-color: #fef2f2;
+  color: var(--error-color);
+  padding: 1rem;
+  border-radius: var(--border-radius-md);
+  margin-top: 1.5rem;
+  border: 1px solid #fecaca;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}

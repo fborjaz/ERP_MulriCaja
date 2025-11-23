@@ -1,0 +1,39 @@
+# Archivos generados por Vite/Electron
+out/
+dist-renderer/
+dist/
+.vite/
+.rollup.cache/
+electron-builder-cache/
+
+# Logs
+*.log
+npm-debug.log*
+electron-log/
+
+# Dependencies
+node_modules/
+
+# IDE
+.vs
+.vscode/
+.idea/
+*.swp
+*.swo
+.vs/ # Visual Studio specific files
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database files
+*.db # Ignora cualquier archivo de base de datos SQLite generado en el directorio del proyecto
+
+# Build artifacts (explicitly for common installer types if not covered by dist/)
+*.exe
+*.dmg
+*.AppImage
+*.snap
+*.deb
+*.rpm
+*-unpacked/

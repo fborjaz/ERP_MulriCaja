@@ -1,0 +1,268 @@
+/**
+ * Estilos de Componentes
+ * @description Estilos para componentes reutilizables
+ */
+
+/* Botones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-lg);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: linear-gradient(
+    135deg,
+    var(--primary-color) 0%,
+    var(--primary-hover) 100%
+  );
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2),
+    0 2px 4px -1px rgba(37, 99, 235, 0.1);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3),
+    0 4px 6px -2px rgba(37, 99, 235, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: white;
+  color: var(--gray-700);
+  border: 1px solid var(--gray-300);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--gray-50);
+  border-color: var(--gray-400);
+  color: var(--gray-900);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+}
+
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--error-color) 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3);
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: var(--border-radius-md);
+}
+
+.btn-lg {
+  padding: 0.875rem 1.75rem;
+  font-size: 1.125rem;
+}
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-xl);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  /* transform: translateY(-2px); Optional: might be too much for all cards */
+}
+
+.card-header {
+  border-bottom: 1px solid var(--gray-100);
+  padding-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  letter-spacing: -0.01em;
+}
+
+/* Formularios */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--gray-700);
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--border-radius-lg);
+  background-color: #fff;
+  transition: all 0.2s ease;
+  color: var(--gray-900);
+}
+
+.form-control:hover {
+  border-color: var(--gray-400);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.form-help {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--gray-500);
+}
+
+/* Tablas */
+.table-container {
+  background: white;
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.data-table th,
+.data-table td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.data-table th {
+  background-color: var(--gray-50);
+  font-weight: 600;
+  color: var(--gray-600);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr:hover td {
+  background-color: var(--gray-50);
+}
+
+.data-table-search {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--spacing-lg);
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.data-table-search:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  line-height: 1;
+}
+
+.badge-success {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.badge-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.badge-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+/* Modal (Base styles, specific in modals.css) */
+/* ... moved to modals.css fully or kept here as base? 
+   The original file had modal styles here too, but there is a modals.css.
+   I will remove modal styles from here to avoid duplication/conflict if they are in modals.css.
+   Wait, the original file HAD modal styles at the end. I should check if I should keep them or if modals.css overrides them.
+   The user has a separate modals.css file. I will assume that is the source of truth for modals.
+   However, to be safe, I will remove them from here if they are indeed duplicates, or keep them if they are used.
+   Let's check modals.css again. It has .modal, .modal-content (missing in modals.css?), .modal-header...
+   Actually, modals.css has .modal-backdrop, .modal, .modal-header...
+   It seems modals.css is more complete. I will remove modal styles from components.css to clean up.
+*/

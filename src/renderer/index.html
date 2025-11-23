@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ERP Multicajas RD</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Loading Screen -->
+      <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+          <div class="spinner"></div>
+          <h2>ERP Multicajas RD</h2>
+          <p>Cargando sistema...</p>
+        </div>
+      </div>
+
+      <!-- Login Screen -->
+      <div id="login-screen" class="login-screen hidden">
+        <div class="login-container">
+          <div class="login-header">
+            <h1>ERP Multicajas</h1>
+            <p>República Dominicana</p>
+          </div>
+          <form id="login-form">
+            <div class="form-group">
+              <label>Usuario</label>
+              <input
+                type="text"
+                id="username"
+                required
+                autocomplete="username"
+              />
+            </div>
+            <div class="form-group">
+              <label>Contraseña</label>
+              <input
+                type="password"
+                id="password"
+                required
+                autocomplete="current-password"
+              />
+            </div>
+            <div class="form-group">
+              <label>Caja</label>
+              <select id="caja" required></select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">
+              <span class="material-icons">login</span>
+              Iniciar Sesión
+            </button>
+          </form>
+          <div id="login-error" class="error-message hidden"></div>
+        </div>
+      </div>
+
+      <!-- Main Application -->
+      <div id="main-app" class="main-app hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <h2>ERP Multicajas</h2>
+            <div class="user-info">
+              <span class="material-icons">account_circle</span>
+              <div>
+                <div id="user-name"></div>
+                <div id="caja-name" class="caja-badge"></div>
+              </div>
+            </div>
+          </div>
+          <nav class="sidebar-nav">
+            <a href="#" data-view="dashboard" class="nav-item active">
+              <span class="material-icons">dashboard</span>
+              Dashboard
+            </a>
+            <a href="#" data-view="ventas" class="nav-item">
+              <span class="material-icons">point_of_sale</span>
+              Ventas
+            </a>
+            <a href="#" data-view="productos" class="nav-item">
+              <span class="material-icons">inventory</span>
+              Productos
+            </a>
+            <a href="#" data-view="clientes" class="nav-item">
+              <span class="material-icons">people</span>
+              Clientes
+            </a>
+            <a href="#" data-view="compras" class="nav-item">
+              <span class="material-icons">shopping_cart</span>
+              Compras
+            </a>
+            <a href="#" data-view="inventario" class="nav-item">
+              <span class="material-icons">warehouse</span>
+              Inventario
+            </a>
+            <a href="#" data-view="despacho" class="nav-item">
+              <span class="material-icons">local_shipping</span>
+              Despachos
+            </a>
+            <a href="#" data-view="apartados" class="nav-item">
+              <span class="material-icons">bookmark</span>
+              Apartados
+            </a>
+            <a href="#" data-view="cotizaciones" class="nav-item">
+              <span class="material-icons">description</span>
+              Cotizaciones
+            </a>
+            <a href="#" data-view="contabilidad" class="nav-item">
+              <span class="material-icons">account_balance</span>
+              Contabilidad
+            </a>
+            <a href="#" data-view="notas-credito" class="nav-item">
+              <span class="material-icons">assignment_return</span>
+              Notas de Crédito
+            </a>
+            <a href="#" data-view="reportes" class="nav-item">
+              <span class="material-icons">assessment</span>
+              Reportes
+            </a>
+            <a href="#" data-view="configuracion" class="nav-item">
+              <span class="material-icons">settings</span>
+              Configuración
+            </a>
+          </nav>
+          <div class="sidebar-footer">
+            <button id="btn-logout" class="btn btn-secondary btn-block">
+              <span class="material-icons">logout</span>
+              Cerrar Sesión
+            </button>
+          </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+          <header class="topbar">
+            <div class="topbar-left">
+              <h1 id="page-title">Dashboard</h1>
+            </div>
+            <div class="topbar-right">
+              <div class="notifications">
+                <span class="material-icons">notifications</span>
+                <span id="notification-badge" class="badge hidden">0</span>
+              </div>
+              <div class="ai-suggestions">
+                <span class="material-icons">lightbulb</span>
+                <span id="ai-badge" class="badge hidden">0</span>
+              </div>
+            </div>
+          </header>
+
+          <div class="content-area">
+            <!-- Views will be loaded here -->
+            <div id="view-container"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Entry Point Principal -->
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

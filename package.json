@@ -1,0 +1,94 @@
+{
+  "name": "erp-multicajas-rd",
+  "version": "1.0.0",
+  "description": "ERP Multicajas República Dominicana - Sistema completo con base de datos embebida",
+  "main": "./out/main/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "start": "electron-vite preview",
+    "build:win": "npm run build && electron-builder --win",
+    "build:win:portable": "npm run build && electron-builder --win portable",
+    "dist": "npm run build && electron-builder --publish=never",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "keywords": [
+    "erp",
+    "multicajas",
+    "republica-dominicana",
+    "electron",
+    "sqlite",
+    "contabilidad",
+    "facturacion-electronica"
+  ],
+  "author": "ERP Multicajas RD",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^12.4.6",
+    "electron-store": "^8.2.0",
+    "jspdf": "^2.5.1",
+    "moment": "^2.29.4",
+    "openai": "^4.20.0",
+    "qrcode": "^1.5.3",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^39.2.3",
+    "electron-builder": "^24.9.1",
+    "electron-vite": "^4.0.1",
+    "vite": "^7.2.4"
+  },
+  "build": {
+    "appId": "com.erpmulticajas.rd",
+    "productName": "ERP Multicajas RD",
+    "compression": "maximum",
+    "files": [
+      "out/**/*",
+      "database/**/*",
+      "assets/**/*"
+    ],
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/favicon.ico",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true,
+      "installerIcon": "assets/favicon.ico",
+      "uninstallerIcon": "assets/favicon.ico",
+      "installerHeaderIcon": "assets/favicon.ico",
+      "include": "build/installer.nsh"
+    },
+    "extraResources": [
+      {
+        "from": "database",
+        "to": "database",
+        "filter": [
+          "**/*.sql"
+        ]
+      }
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+/**
+ * Archivo Principal de Estilos
+ * @description Importa todos los estilos del proyecto
+ */
+
+/* Variables y Tokens */
+@import "./variables.css";
+
+/* Componentes */
+@import "./components.css";
+
+/* Layout */
+@import "./layout.css";
+
+/* Módulos */
+@import "./modules.css";
+
+/* Utilidades */
+@import "./utilities.css";
+@import "./login.css";
+@import "./modals.css";

@@ -1,0 +1,109 @@
+/**
+ * Aplicación Principal - Inicialización
+ * @module renderer/core/app
+ */
+
+import { router } from "./router.js";
+import { toast } from "../components/notifications/toast.js";
+
+export const App = {
+  /**
+   * Inicializa la aplicación
+   */
+  async init() {
+    console.log("🚀 Iniciando ERP Multicajas RD...");
+
+    try {
+      // Verificar autenticación
+      const currentUser = localStorage.getItem("currentUser");
+      if (!currentUser) {
+        console.log("❌ Usuario no autenticado");
+        return;
+      }
+
+      // Inicializar router
+      await router.init();
+
+      // Cargar información del usuario
+      this.loadUserInfo();
+
+      // Setup event listeners globales
+      this.setupGlobalListeners();
+
+      console.log("✅ Aplicación inicializada correctamente");
+    } catch (error) {
+      console.error("❌ Error inicializando aplicación:", error);
+      toast.error("Error inicializando aplicación");
+    }
+  },
+
+  /**
+   * Carga información del usuario en la UI
+   */
+  loadUserInfo() {
+    const userStr = localStorage.getItem("currentUser");
+    const cajaStr = localStorage.getItem("currentCaja");
+
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        const userNameEl = document.getElementById("user-name");
+        if (userNameEl) {
+          userNameEl.textContent = `${user.nombre} ${user.apellido}`;
+        }
+      } catch (error) {
+        console.error("Error parseando usuario:", error);
+      }
+    }
+
+    if (cajaStr) {
+      try {
+        const caja = JSON.parse(cajaStr);
+        const cajaNameEl = document.getElementById("caja-name");
+        if (cajaNameEl) {
+          cajaNameEl.textContent = caja.nombre;
+        }
+      } catch (error) {
+        console.error("Error parseando caja:", error);
+      }
+    }
+  },
+
+  /**
+   * Configura event listeners globales
+   */
+  setupGlobalListeners() {
+    // Logout button
+    const logoutBtn = document.getElementById("btn-logout");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", () => {
+        if (confirm("¿Está seguro de cerrar sesión?")) {
+          localStorage.clear();
+          location.reload();
+        }
+      });
+    }
+
+    // Atajos de teclado
+    document.addEventListener("keydown", (e) => {
+      // F1: Dashboard
+      if (e.key === "F1") {
+        e.preventDefault();
+        router.navigate("dashboard");
+      }
+      // F2: Ventas
+      if (e.key === "F2") {
+        e.preventDefault();
+        router.navigate("ventas");
+      }
+      // F3: Productos
+      if (e.key === "F3") {
+        e.preventDefault();
+        router.navigate("productos");
+      }
+    });
+  },
+};
+
+// Exportar también como default
+export default App;
