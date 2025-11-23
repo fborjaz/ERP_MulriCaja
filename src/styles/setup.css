@@ -1,0 +1,316 @@
+/**
+ * Estilos para Setup Wizard (Configuración Inicial)
+ */
+
+/* Setup Screen Container */
+.setup-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.setup-wizard {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.setup-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Setup Header */
+.setup-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  border-radius: 16px 16px 0 0;
+}
+
+.setup-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.setup-header p {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.95;
+}
+
+/* Setup Content */
+.setup-content {
+  padding: 2.5rem 2rem;
+}
+
+.setup-step h2 {
+  color: var(--gray-800);
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+}
+
+.step-description {
+  color: var(--gray-600);
+  margin: 0 0 2rem 0;
+  line-height: 1.6;
+}
+
+/* Password Input Wrapper */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  flex: 1;
+  padding-right: 3rem;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: var(--gray-500);
+  transition: color var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-password:hover {
+  color: var(--primary-color);
+}
+
+.toggle-password .material-icons {
+  font-size: 1.25rem;
+}
+
+/* Password Strength Indicator */
+.password-strength {
+  margin-top: 0.75rem;
+}
+
+.strength-bar {
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.strength-bar-fill {
+  height: 100%;
+  transition: all var(--transition-base);
+  border-radius: 3px;
+}
+
+.strength-bar-fill.weak {
+  background: var(--error-color);
+}
+
+.strength-bar-fill.fair {
+  background: var(--warning-color);
+}
+
+.strength-bar-fill.good {
+  background: #3b82f6;
+}
+
+.strength-bar-fill.excellent {
+  background: var(--success-color);
+}
+
+.strength-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color var(--transition-base);
+}
+
+.strength-text.weak {
+  color: var(--error-color);
+}
+
+.strength-text.fair {
+  color: var(--warning-color);
+}
+
+.strength-text.good {
+  color: #3b82f6;
+}
+
+.strength-text.excellent {
+  color: var(--success-color);
+}
+
+/* Password Requirements */
+.password-requirements {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.password-requirements h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  color: var(--gray-700);
+  font-weight: 600;
+}
+
+.password-requirements ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.password-requirements li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  transition: color var(--transition-base);
+}
+
+.password-requirements li .material-icons {
+  font-size: 1.125rem;
+  color: var(--gray-400);
+  transition: color var(--transition-base);
+}
+
+.password-requirements li.met {
+  color: var(--success-color);
+}
+
+.password-requirements li.met .material-icons {
+  color: var(--success-color);
+}
+
+/* Input States */
+input.error {
+  border-color: var(--error-color);
+  background: var(--error-light);
+}
+
+input.success {
+  border-color: var(--success-color);
+  background: var(--success-light);
+}
+
+.readonly-input {
+  background: var(--gray-100);
+  cursor: not-allowed;
+}
+
+/* Setup Actions */
+.setup-actions {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-large {
+  padding: 1rem 2rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-large .material-icons {
+  font-size: 1.25rem;
+}
+
+/* Setup Footer */
+.setup-footer {
+  background: var(--gray-50);
+  padding: 1.5rem 2rem;
+  text-align: center;
+  border-radius: 0 0 16px 16px;
+  border-top: 1px solid var(--gray-200);
+}
+
+.setup-footer p {
+  margin: 0;
+  color: var(--gray-600);
+  font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .setup-wizard {
+    padding: 1rem;
+  }
+
+  .setup-container {
+    max-height: 95vh;
+  }
+
+  .setup-header {
+    padding: 2rem 1.5rem;
+  }
+
+  .setup-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .setup-content {
+    padding: 2rem 1.5rem;
+  }
+
+  .setup-step h2 {
+    font-size: 1.25rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.setup-step {
+  animation: fadeIn 0.3s ease-out;
+}

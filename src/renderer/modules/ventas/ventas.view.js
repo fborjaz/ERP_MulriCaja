@@ -8,11 +8,13 @@ import { toast } from "../../components/notifications/toast.js";
 import { debounce, formatCurrency } from "../../utils/helpers.js";
 import { printService } from "../../services/print.service.js";
 import { authService } from "../../services/auth.service.js";
+import { Validator } from "../../utils/validator.util.js";
+import { handleError } from "../../utils/error-handler.js";
 
 export const VentasView = {
   carrito: [],
   clienteSeleccionado: null,
-  
+
   render() {
     return `
       <div class="pos-container">
@@ -117,7 +119,8 @@ export const VentasView = {
     }, 300);
     this.handleMetodoPagoChange = (e) => {
       const efectivoDiv = document.getElementById("efectivo-recibido-div");
-      efectivoDiv.style.display = e.target.value === "Efectivo" ? "block" : "none";
+      efectivoDiv.style.display =
+        e.target.value === "Efectivo" ? "block" : "none";
     };
 
     this.limpiarCarrito();
@@ -128,22 +131,34 @@ export const VentasView = {
    * Configura los event listeners
    */
   setupEventListeners() {
-    document.getElementById("producto-search").addEventListener("input", this.debouncedSearch);
-    document.getElementById("btn-agregar-producto").addEventListener("click", () => this.agregarProducto());
-    document.getElementById("btn-procesar-venta").addEventListener("click", () => this.procesarVenta());
-    document.getElementById("btn-limpiar-carrito").addEventListener("click", () => this.limpiarCarrito());
-    document.getElementById("metodo-pago").addEventListener("change", this.handleMetodoPagoChange);
+    document
+      .getElementById("producto-search")
+      .addEventListener("input", this.debouncedSearch);
+    document
+      .getElementById("btn-agregar-producto")
+      .addEventListener("click", () => this.agregarProducto());
+    document
+      .getElementById("btn-procesar-venta")
+      .addEventListener("click", () => this.procesarVenta());
+    document
+      .getElementById("btn-limpiar-carrito")
+      .addEventListener("click", () => this.limpiarCarrito());
+    document
+      .getElementById("metodo-pago")
+      .addEventListener("change", this.handleMetodoPagoChange);
   },
 
   cleanup() {
-    document.getElementById("producto-search")?.removeEventListener("input", this.debouncedSearch);
+    document
+      .getElementById("producto-search")
+      ?.removeEventListener("input", this.debouncedSearch);
     // Remover otros listeners si es necesario para evitar fugas de memoria
   },
 
   async buscarProductos(filtro) {
-    if (!filtro || filtro.trim() === '') {
-        document.getElementById("productos-resultados").innerHTML = '';
-        return;
+    if (!filtro || filtro.trim() === "") {
+      document.getElementById("productos-resultados").innerHTML = "";
+      return;
     }
     try {
       const productos = await db.getProductos(filtro);
@@ -157,22 +172,27 @@ export const VentasView = {
   mostrarResultadosProductos(productos) {
     const resultados = document.getElementById("productos-resultados");
     if (productos.length === 0) {
-      resultados.innerHTML = "<div class='search-result-item'>No se encontraron productos</div>";
+      resultados.innerHTML =
+        "<div class='search-result-item'>No se encontraron productos</div>";
       return;
     }
-    resultados.innerHTML = productos.map(p => `
+    resultados.innerHTML = productos
+      .map(
+        (p) => `
       <div class="search-result-item" data-id="${p.id}">
-        <span>${p.nombre} (${p.codigo || 'N/A'})</span>
+        <span>${p.nombre} (${p.codigo || "N/A"})</span>
         <span>${formatCurrency(p.precio_venta)}</span>
       </div>
-    `).join("");
+    `
+      )
+      .join("");
 
-    resultados.querySelectorAll(".search-result-item").forEach(item => {
+    resultados.querySelectorAll(".search-result-item").forEach((item) => {
       item.addEventListener("click", () => {
         const id = parseInt(item.getAttribute("data-id"));
         this.seleccionarProducto(id);
-        resultados.innerHTML = '';
-        document.getElementById("producto-search").value = '';
+        resultados.innerHTML = "";
+        document.getElementById("producto-search").value = "";
       });
     });
   },
@@ -191,35 +211,100 @@ export const VentasView = {
     }
   },
 
-  agregarProducto() {
-    const productoId = parseInt(document.getElementById("producto-id").value);
-    const nombre = document.getElementById("producto-nombre").value;
-    const precio = parseFloat(document.getElementById("producto-precio").value);
-    const cantidad = parseFloat(document.getElementById("producto-cantidad").value);
+  async agregarProducto() {
+    try {
+      const productoId = parseInt(document.getElementById("producto-id").value);
+      const nombre = document.getElementById("producto-nombre").value;
+      const precio = parseFloat(
+        document.getElementById("producto-precio").value
+      );
+      const cantidad = parseFloat(
+        document.getElementById("producto-cantidad").value
+      );
 
-    if (!productoId || !cantidad || cantidad <= 0) {
-      toast.warning("Seleccione un producto y cantidad válida");
-      return;
+      // ===== VALIDACIONES =====
+
+      // 1. Validar que se haya seleccionado un producto
+      if (!productoId) {
+        toast.warning("Por favor seleccione un producto");
+        return;
+      }
+
+      // 2. Validar que la cantidad sea un número positivo
+      if (!Validator.isPositiveNumber(cantidad)) {
+        toast.error("La cantidad debe ser un número positivo");
+        return;
+      }
+
+      // 3. Validar que el precio sea positivo
+      if (!Validator.isPositiveNumber(precio)) {
+        toast.error("El precio debe ser un número positivo");
+        return;
+      }
+
+      // 4. Verificar stock disponible
+      const producto = await db.getProducto(productoId);
+
+      if (!producto) {
+        toast.error("Producto no encontrado");
+        return;
+      }
+
+      // Calcular cantidad total en carrito (existente + nueva)
+      const existente = this.carrito.find(
+        (item) => item.producto_id === productoId
+      );
+      const cantidadTotalEnCarrito = existente
+        ? existente.cantidad + cantidad
+        : cantidad;
+
+      // Verificar que no exceda el stock disponible
+      if (cantidadTotalEnCarrito > producto.stock_actual) {
+        toast.error(
+          `Stock insuficiente. Disponible: ${producto.stock_actual}, ` +
+            `en carrito: ${existente ? existente.cantidad : 0}, ` +
+            `solicitado: ${cantidad}`
+        );
+        return;
+      }
+
+      // 5. Validar cantidad razonable (máximo 1000 unidades por transacción)
+      if (cantidad > 1000) {
+        toast.error("La cantidad máxima por transacción es 1000 unidades");
+        return;
+      }
+
+      // ===== AGREGAR AL CARRITO =====
+
+      if (existente) {
+        existente.cantidad += cantidad;
+      } else {
+        this.carrito.push({
+          producto_id: productoId,
+          nombre,
+          precio_unitario: precio,
+          cantidad,
+          stock_disponible: producto.stock_actual,
+        });
+      }
+
+      this.actualizarCarrito();
+      this.limpiarFormularioProducto();
+      toast.success(`${cantidad} x ${nombre} agregado al carrito`);
+    } catch (error) {
+      handleError(error, "Error al agregar producto al carrito");
     }
-
-    const existente = this.carrito.find(item => item.producto_id === productoId);
-    if (existente) {
-      existente.cantidad += cantidad;
-    } else {
-      this.carrito.push({ producto_id: productoId, nombre, precio_unitario: precio, cantidad });
-    }
-
-    this.actualizarCarrito();
-    this.limpiarFormularioProducto();
-    toast.success("Producto agregado");
   },
 
   actualizarCarrito() {
     const tbody = document.getElementById("carrito-items");
     if (this.carrito.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Carrito vacío</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="5" style="text-align: center;">Carrito vacío</td></tr>';
     } else {
-      tbody.innerHTML = this.carrito.map((item, index) => `
+      tbody.innerHTML = this.carrito
+        .map(
+          (item, index) => `
         <tr>
           <td>${item.nombre}</td>
           <td>${item.cantidad}</td>
@@ -227,21 +312,29 @@ export const VentasView = {
           <td>${formatCurrency(item.cantidad * item.precio_unitario)}</td>
           <td><button class="btn btn-sm btn-danger btn-eliminar-carrito" data-index="${index}">&times;</button></td>
         </tr>
-      `).join("");
+      `
+        )
+        .join("");
     }
 
-    tbody.querySelectorAll(".btn-eliminar-carrito").forEach(btn => {
-      btn.addEventListener("click", () => this.eliminarDelCarrito(parseInt(btn.dataset.index)));
+    tbody.querySelectorAll(".btn-eliminar-carrito").forEach((btn) => {
+      btn.addEventListener("click", () =>
+        this.eliminarDelCarrito(parseInt(btn.dataset.index))
+      );
     });
 
-    let subtotal = this.carrito.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0);
+    let subtotal = this.carrito.reduce(
+      (sum, item) => sum + item.cantidad * item.precio_unitario,
+      0
+    );
     const itbis = subtotal * 0.18;
     const total = subtotal + itbis;
     this.actualizarTotales(subtotal, itbis, total);
   },
 
   actualizarTotales(subtotal, itbis, total) {
-    document.getElementById("venta-subtotal").textContent = formatCurrency(subtotal);
+    document.getElementById("venta-subtotal").textContent =
+      formatCurrency(subtotal);
     document.getElementById("venta-itbis").textContent = formatCurrency(itbis);
     document.getElementById("venta-total").textContent = formatCurrency(total);
   },
@@ -253,28 +346,86 @@ export const VentasView = {
   },
 
   async procesarVenta() {
-    if (this.carrito.length === 0) {
-      toast.warning("El carrito está vacío");
-      return;
-    }
-    // ... (resto de la lógica de procesarVenta, que ya era correcta)
-    const metodoPago = document.getElementById("metodo-pago").value;
-    const efectivoRecibido = metodoPago === "Efectivo" ? parseFloat(document.getElementById("efectivo-recibido").value) || 0 : 0;
-    let subtotal = this.carrito.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0);
-    const total = subtotal * 1.18;
-
-    if (metodoPago === "Efectivo" && efectivoRecibido < total) {
-      toast.error("El efectivo recibido es menor al total");
-      return;
-    }
-
     try {
+      // ===== VALIDACIONES PREVIAS =====
+
+      // 1. Validar que el carrito no esté vacío
+      if (this.carrito.length === 0) {
+        toast.warning("El carrito está vacío");
+        return;
+      }
+
+      // 2. Obtener datos de pago
+      const metodoPago = document.getElementById("metodo-pago").value;
+      const efectivoRecibidoInput =
+        document.getElementById("efectivo-recibido").value;
+      const efectivoRecibido =
+        metodoPago === "Efectivo" ? parseFloat(efectivoRecibidoInput) || 0 : 0;
+
+      // 3. Calcular totales
+      let subtotal = this.carrito.reduce(
+        (sum, item) => sum + item.cantidad * item.precio_unitario,
+        0
+      );
+      const itbis = subtotal * 0.18;
+      const total = subtotal + itbis;
+
+      // 4. Validar método de pago
+      const metodosValidos = ["Efectivo", "Tarjeta", "Transferencia"];
+      if (!metodosValidos.includes(metodoPago)) {
+        toast.error("Método de pago inválido");
+        return;
+      }
+
+      // 5. Validar efectivo recibido si el método es Efectivo
+      if (metodoPago === "Efectivo") {
+        if (!Validator.isPositiveNumber(efectivoRecibido)) {
+          toast.error("Ingrese el efectivo recibido");
+          document.getElementById("efectivo-recibido").focus();
+          return;
+        }
+
+        if (efectivoRecibido < total) {
+          const faltante = total - efectivoRecibido;
+          toast.error(
+            `Efectivo insuficiente. Total: ${formatCurrency(total)}, ` +
+              `Recibido: ${formatCurrency(efectivoRecibido)}, ` +
+              `Faltante: ${formatCurrency(faltante)}`
+          );
+          document.getElementById("efectivo-recibido").focus();
+          return;
+        }
+      }
+
+      // 6. Validar sesión de usuario y caja
       const user = authService.getCurrentUser();
       const caja = authService.getCurrentCaja();
+
       if (!user || !caja) {
         toast.error("Error de sesión. Por favor inicie sesión nuevamente.");
         return;
       }
+
+      // 7. Verificar stock disponible para todos los productos
+      for (const item of this.carrito) {
+        const producto = await db.getProducto(item.producto_id);
+
+        if (!producto) {
+          toast.error(`Producto "${item.nombre}" no encontrado`);
+          return;
+        }
+
+        if (item.cantidad > producto.stock_actual) {
+          toast.error(
+            `Stock insuficiente para "${item.nombre}". ` +
+              `Disponible: ${producto.stock_actual}, Solicitado: ${item.cantidad}`
+          );
+          return;
+        }
+      }
+
+      // ===== PROCESAR VENTA =====
+
       const ventaData = {
         caja_id: caja.id,
         usuario_id: user.id,
@@ -283,17 +434,34 @@ export const VentasView = {
         metodo_pago: metodoPago,
         efectivo_recibido: efectivoRecibido,
       };
-      const result = await db.crearVenta(ventaData);
-      toast.success(`Venta ${result.numero_factura} procesada`);
 
+      const result = await db.crearVenta(ventaData);
+
+      // Mostrar cambio si es efectivo
+      if (metodoPago === "Efectivo") {
+        const cambio = efectivoRecibido - total;
+        if (cambio > 0) {
+          toast.success(
+            `Venta ${result.numero_factura} procesada. Cambio: ${formatCurrency(
+              cambio
+            )}`
+          );
+        } else {
+          toast.success(`Venta ${result.numero_factura} procesada`);
+        }
+      } else {
+        toast.success(`Venta ${result.numero_factura} procesada`);
+      }
+
+      // Preguntar si desea imprimir
       if (confirm("¿Desea imprimir la factura?")) {
         const venta = await db.getVenta(result.id);
         await printService.imprimirFactura(venta);
       }
+
       this.limpiarCarrito();
     } catch (error) {
-      console.error("Error procesando venta:", error);
-      toast.error("Error procesando venta: " + error.message);
+      handleError(error, "Error al procesar la venta");
     }
   },
 
@@ -304,7 +472,7 @@ export const VentasView = {
     this.limpiarFormularioProducto();
     document.getElementById("metodo-pago").value = "Efectivo";
     document.getElementById("efectivo-recibido").value = "";
-    document.getElementById("efectivo-recibido-div").style.display = 'block';
+    document.getElementById("efectivo-recibido-div").style.display = "block";
   },
 
   limpiarFormularioProducto() {

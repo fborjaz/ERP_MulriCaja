@@ -6,6 +6,8 @@
 import { api } from "../../core/api.js";
 import { toast } from "../../components/notifications/toast.js";
 import { formatDate, formatCurrency } from "../../utils/helpers.js";
+import { Validator } from "../../utils/validator.util.js";
+import { handleError } from "../../utils/error-handler.js";
 
 export const ApartadosView = {
   apartados: [],
@@ -77,8 +79,10 @@ export const ApartadosView = {
   setupEventListeners() {
     // La creación de apartados debería originarse en la pantalla de ventas
     const btnNuevo = document.getElementById("btn-nuevo-apartado");
-    btnNuevo.addEventListener("click", () => toast.info("Los apartados se crean desde la pantalla de Ventas."));
-    
+    btnNuevo.addEventListener("click", () =>
+      toast.info("Los apartados se crean desde la pantalla de Ventas.")
+    );
+
     // Modal listeners (se delegan en mostrarApartados)
   },
 
@@ -103,45 +107,72 @@ export const ApartadosView = {
     if (!tbody) return;
 
     if (this.apartados.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay apartados pendientes</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="7" style="text-align: center;">No hay apartados pendientes</td></tr>';
       return;
     }
 
-    tbody.innerHTML = this.apartados.map(a => {
+    tbody.innerHTML = this.apartados
+      .map((a) => {
         const pendiente = a.total - a.abonado;
         return `
       <tr>
         <td>${a.id}</td>
         <td>${formatDate(a.fecha)}</td>
-        <td>${a.cliente_nombre} ${a.cliente_apellido || ''}</td>
+        <td>${a.cliente_nombre} ${a.cliente_apellido || ""}</td>
         <td>${formatCurrency(a.total)}</td>
         <td>${formatCurrency(a.abonado)}</td>
         <td class="text-danger">${formatCurrency(pendiente)}</td>
         <td>
-          <button class="btn btn-sm btn-primary btn-abonar" data-id="${a.id}">Abonar</button>
-          ${pendiente <= 0 ? `<button class="btn btn-sm btn-success btn-completar" data-id="${a.id}">Completar</button>` : ''}
+          <button class="btn btn-sm btn-primary btn-abonar" data-id="${
+            a.id
+          }">Abonar</button>
+          ${
+            pendiente <= 0
+              ? `<button class="btn btn-sm btn-success btn-completar" data-id="${a.id}">Completar</button>`
+              : ""
+          }
         </td>
       </tr>
-    `}).join("");
+    `;
+      })
+      .join("");
 
-    tbody.querySelectorAll(".btn-abonar").forEach(btn => btn.addEventListener("click", () => this.mostrarModalAbono(parseInt(btn.dataset.id))));
-    tbody.querySelectorAll(".btn-completar").forEach(btn => btn.addEventListener("click", () => this.completarApartado(parseInt(btn.dataset.id))));
+    tbody
+      .querySelectorAll(".btn-abonar")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          this.mostrarModalAbono(parseInt(btn.dataset.id))
+        )
+      );
+    tbody
+      .querySelectorAll(".btn-completar")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          this.completarApartado(parseInt(btn.dataset.id))
+        )
+      );
   },
 
   mostrarModalAbono(id) {
-    const apartado = this.apartados.find(a => a.id === id);
+    const apartado = this.apartados.find((a) => a.id === id);
     if (!apartado) return;
 
     document.getElementById("abono-apartado-id").textContent = id;
-    document.getElementById("abono-deuda-actual").textContent = formatCurrency(apartado.total - apartado.abonado);
+    document.getElementById("abono-deuda-actual").textContent = formatCurrency(
+      apartado.total - apartado.abonado
+    );
     document.getElementById("abono-apartado-id-form").value = id;
     document.getElementById("abono-monto").value = "";
 
     document.getElementById("modal-abonar").classList.remove("hidden");
-    
-    document.getElementById("btn-cerrar-modal-abono").onclick = () => this.ocultarModalAbono();
-    document.getElementById("btn-cancelar-abono").onclick = () => this.ocultarModalAbono();
-    document.getElementById("btn-guardar-abono").onclick = () => this.guardarAbono();
+
+    document.getElementById("btn-cerrar-modal-abono").onclick = () =>
+      this.ocultarModalAbono();
+    document.getElementById("btn-cancelar-abono").onclick = () =>
+      this.ocultarModalAbono();
+    document.getElementById("btn-guardar-abono").onclick = () =>
+      this.guardarAbono();
   },
 
   ocultarModalAbono() {
@@ -149,36 +180,83 @@ export const ApartadosView = {
   },
 
   async guardarAbono() {
-    const id = document.getElementById("abono-apartado-id-form").value;
-    const monto = parseFloat(document.getElementById("abono-monto").value);
-    
-    if (!monto || monto <= 0) {
-      toast.error("El monto a abonar debe ser mayor que cero.");
-      return;
-    }
-
     try {
-      await api.dbQuery("UPDATE apartados SET abonado = abonado + ? WHERE id = ?", [monto, id]);
-      toast.success("Abono registrado correctamente");
+      const id = parseInt(
+        document.getElementById("abono-apartado-id-form").value
+      );
+      const monto = parseFloat(document.getElementById("abono-monto").value);
+
+      // ===== VALIDACIONES =====
+
+      // 1. Validar monto positivo
+      if (!Validator.isPositiveNumber(monto)) {
+        toast.error("El monto a abonar debe ser un número positivo");
+        return;
+      }
+
+      // 2. Obtener apartado y validar deuda pendiente
+      const apartado = this.apartados.find((a) => a.id === id);
+      if (!apartado) {
+        toast.error("Apartado no encontrado");
+        return;
+      }
+
+      const pendiente = apartado.total - apartado.abonado;
+
+      // 3. Validar que el abono no exceda la deuda
+      if (monto > pendiente) {
+        toast.error(
+          `El abono (${formatCurrency(
+            monto
+          )}) no puede ser mayor que la deuda pendiente (${formatCurrency(
+            pendiente
+          )})`
+        );
+        return;
+      }
+
+      // 4. Validar monto razonable (máximo 1 millón)
+      if (monto > 1000000) {
+        toast.error("El monto parece demasiado alto. Verifique el valor.");
+        return;
+      }
+
+      // ===== GUARDAR EN BASE DE DATOS =====
+
+      await api.dbQuery(
+        "UPDATE apartados SET abonado = abonado + ? WHERE id = ?",
+        [monto, id]
+      );
+
+      const nuevoAbonado = apartado.abonado + monto;
+      const nuevoPendiente = apartado.total - nuevoAbonado;
+
+      toast.success(
+        `Abono registrado: ${formatCurrency(monto)}. ` +
+          `Pendiente: ${formatCurrency(nuevoPendiente)}`
+      );
+
       this.ocultarModalAbono();
-      this.cargarApartados();
-    } catch(error) {
-      console.error("Error guardando abono:", error);
-      toast.error("Error al registrar el abono.");
+      await this.cargarApartados();
+    } catch (error) {
+      handleError(error, "Error al registrar el abono");
     }
   },
 
   async completarApartado(id) {
     if (!confirm("¿Marcar este apartado como completado/entregado?")) return;
     try {
-        await api.dbQuery("UPDATE apartados SET estado = 'Completado' WHERE id = ?", [id]);
-        toast.success("Apartado completado.");
-        this.cargarApartados();
-    } catch(error) {
-        console.error("Error completando apartado:", error);
-        toast.error("Error al completar el apartado.");
+      await api.dbQuery(
+        "UPDATE apartados SET estado = 'Completado' WHERE id = ?",
+        [id]
+      );
+      toast.success("Apartado completado.");
+      this.cargarApartados();
+    } catch (error) {
+      console.error("Error completando apartado:", error);
+      toast.error("Error al completar el apartado.");
     }
-  }
+  },
 };
 
 export default ApartadosView;

@@ -7,6 +7,8 @@ import { api } from "../../core/api.js";
 import { db } from "../../services/database.service.js";
 import { toast } from "../../components/notifications/toast.js";
 import { debounce } from "../../utils/helpers.js";
+import { Validator } from "../../utils/validator.util.js";
+import { handleError } from "../../utils/error-handler.js";
 
 export const ClientesView = {
   clientes: [],
@@ -100,19 +102,30 @@ export const ClientesView = {
     await this.cargarClientes();
     this.setupEventListeners();
   },
-  
+
   setupEventListeners() {
-    document.getElementById("btn-nuevo-cliente").addEventListener("click", () => this.mostrarModalNuevo());
+    document
+      .getElementById("btn-nuevo-cliente")
+      .addEventListener("click", () => this.mostrarModalNuevo());
     const searchInput = document.getElementById("clientes-search");
-    searchInput.addEventListener("input", debounce(() => this.filtrarClientes(searchInput.value), 300));
-    
+    searchInput.addEventListener(
+      "input",
+      debounce(() => this.filtrarClientes(searchInput.value), 300)
+    );
+
     // Modal Listeners
-    document.getElementById("btn-cerrar-modal-cliente").addEventListener("click", () => this.ocultarModal());
-    document.getElementById("btn-cancelar-cliente").addEventListener("click", () => this.ocultarModal());
+    document
+      .getElementById("btn-cerrar-modal-cliente")
+      .addEventListener("click", () => this.ocultarModal());
+    document
+      .getElementById("btn-cancelar-cliente")
+      .addEventListener("click", () => this.ocultarModal());
     document.getElementById("modal-cliente").addEventListener("click", (e) => {
       if (e.target.id === "modal-cliente") this.ocultarModal();
     });
-    document.getElementById("btn-guardar-cliente").addEventListener("click", () => this.guardarCliente());
+    document
+      .getElementById("btn-guardar-cliente")
+      .addEventListener("click", () => this.guardarCliente());
   },
 
   async cargarClientes(filtro = "") {
@@ -130,32 +143,54 @@ export const ClientesView = {
   mostrarClientes() {
     const tbody = document.getElementById("clientes-table-body");
     if (this.clientes.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No se encontraron clientes</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="7" style="text-align: center;">No se encontraron clientes</td></tr>';
       return;
     }
-    tbody.innerHTML = this.clientes.map(c => `
+    tbody.innerHTML = this.clientes
+      .map(
+        (c) => `
       <tr>
         <td>${c.id}</td>
-        <td>${c.nombre} ${c.apellido || ''}</td>
-        <td>${c.tipo_cliente || 'Personal'}</td>
-        <td>${c.cedula || c.rnc || '-'}</td>
-        <td>${c.telefono || '-'}</td>
-        <td>${c.email || '-'}</td>
+        <td>${c.nombre} ${c.apellido || ""}</td>
+        <td>${c.tipo_cliente || "Personal"}</td>
+        <td>${c.cedula || c.rnc || "-"}</td>
+        <td>${c.telefono || "-"}</td>
+        <td>${c.email || "-"}</td>
         <td>
-          <button class="btn btn-sm btn-secondary btn-editar" data-id="${c.id}"><span class="material-icons">edit</span></button>
-          <button class="btn btn-sm btn-danger btn-eliminar" data-id="${c.id}"><span class="material-icons">delete</span></button>
+          <button class="btn btn-sm btn-secondary btn-editar" data-id="${
+            c.id
+          }"><span class="material-icons">edit</span></button>
+          <button class="btn btn-sm btn-danger btn-eliminar" data-id="${
+            c.id
+          }"><span class="material-icons">delete</span></button>
         </td>
       </tr>
-    `).join('');
-    
-    tbody.querySelectorAll(".btn-editar").forEach(btn => btn.addEventListener("click", () => this.editarCliente(parseInt(btn.dataset.id))));
-    tbody.querySelectorAll(".btn-eliminar").forEach(btn => btn.addEventListener("click", () => this.eliminarCliente(parseInt(btn.dataset.id))));
+    `
+      )
+      .join("");
+
+    tbody
+      .querySelectorAll(".btn-editar")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          this.editarCliente(parseInt(btn.dataset.id))
+        )
+      );
+    tbody
+      .querySelectorAll(".btn-eliminar")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          this.eliminarCliente(parseInt(btn.dataset.id))
+        )
+      );
   },
 
   filtrarClientes(filtro) {
     // Implementando filtrado en frontend como fallback
     const filtroLower = filtro.toLowerCase();
-    const clientesFiltrados = this.clientes.filter(c =>
+    const clientesFiltrados = this.clientes.filter(
+      (c) =>
         c.nombre.toLowerCase().includes(filtroLower) ||
         (c.apellido && c.apellido.toLowerCase().includes(filtroLower)) ||
         (c.cedula && c.cedula.includes(filtro)) ||
@@ -166,57 +201,81 @@ export const ClientesView = {
   },
 
   mostrarClientesFiltrados(clientes) {
-      // Similar a mostrarClientes, pero con una lista ya filtrada.
-      // Esto evita otra llamada a la base de datos si el filtrado es en frontend.
-      const tbody = document.getElementById("clientes-table-body");
-      if (clientes.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No coinciden con la búsqueda</td></tr>';
-        return;
-      }
-      // Re-usamos el HTML-mapping
-      const html = clientes.map(c => `...`).join(''); // El mapping es largo, se omite por brevedad
-      tbody.innerHTML = this.clientes.map(c => `
+    // Similar a mostrarClientes, pero con una lista ya filtrada.
+    // Esto evita otra llamada a la base de datos si el filtrado es en frontend.
+    const tbody = document.getElementById("clientes-table-body");
+    if (clientes.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="7" style="text-align: center;">No coinciden con la búsqueda</td></tr>';
+      return;
+    }
+    // Re-usamos el HTML-mapping
+    const html = clientes.map((c) => `...`).join(""); // El mapping es largo, se omite por brevedad
+    tbody.innerHTML = this.clientes
+      .map(
+        (c) => `
       <tr>
         <td>${c.id}</td>
-        <td>${c.nombre} ${c.apellido || ''}</td>
-        <td>${c.tipo_cliente || 'Personal'}</td>
-        <td>${c.cedula || c.rnc || '-'}</td>
-        <td>${c.telefono || '-'}</td>
-        <td>${c.email || '-'}</td>
+        <td>${c.nombre} ${c.apellido || ""}</td>
+        <td>${c.tipo_cliente || "Personal"}</td>
+        <td>${c.cedula || c.rnc || "-"}</td>
+        <td>${c.telefono || "-"}</td>
+        <td>${c.email || "-"}</td>
         <td>
-          <button class="btn btn-sm btn-secondary btn-editar" data-id="${c.id}"><span class="material-icons">edit</span></button>
-          <button class="btn btn-sm btn-danger btn-eliminar" data-id="${c.id}"><span class="material-icons">delete</span></button>
+          <button class="btn btn-sm btn-secondary btn-editar" data-id="${
+            c.id
+          }"><span class="material-icons">edit</span></button>
+          <button class="btn btn-sm btn-danger btn-eliminar" data-id="${
+            c.id
+          }"><span class="material-icons">delete</span></button>
         </td>
       </tr>
-    `).join('');
+    `
+      )
+      .join("");
 
-    tbody.querySelectorAll(".btn-editar").forEach(btn => btn.addEventListener("click", () => this.editarCliente(parseInt(btn.dataset.id))));
-    tbody.querySelectorAll(".btn-eliminar").forEach(btn => btn.addEventListener("click", () => this.eliminarCliente(parseInt(btn.dataset.id))));
+    tbody
+      .querySelectorAll(".btn-editar")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          this.editarCliente(parseInt(btn.dataset.id))
+        )
+      );
+    tbody
+      .querySelectorAll(".btn-eliminar")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          this.eliminarCliente(parseInt(btn.dataset.id))
+        )
+      );
   },
 
   mostrarModalNuevo() {
     this.editandoId = null;
-    document.getElementById("modal-cliente-titulo").textContent = "Nuevo Cliente";
+    document.getElementById("modal-cliente-titulo").textContent =
+      "Nuevo Cliente";
     document.getElementById("form-cliente").reset();
     document.getElementById("modal-cliente").classList.remove("hidden");
   },
 
   async editarCliente(id) {
-    const cliente = this.clientes.find(c => c.id === id);
+    const cliente = this.clientes.find((c) => c.id === id);
     if (!cliente) {
       toast.error("Cliente no encontrado");
       return;
     }
     this.editandoId = id;
-    document.getElementById("modal-cliente-titulo").textContent = "Editar Cliente";
+    document.getElementById("modal-cliente-titulo").textContent =
+      "Editar Cliente";
     document.getElementById("cliente-id-form").value = cliente.id;
     document.getElementById("cliente-nombre").value = cliente.nombre;
-    document.getElementById("cliente-apellido").value = cliente.apellido || '';
-    document.getElementById("cliente-cedula").value = cliente.cedula || '';
-    document.getElementById("cliente-rnc").value = cliente.rnc || '';
-    document.getElementById("cliente-telefono").value = cliente.telefono || '';
-    document.getElementById("cliente-email").value = cliente.email || '';
-    document.getElementById("cliente-direccion").value = cliente.direccion || '';
+    document.getElementById("cliente-apellido").value = cliente.apellido || "";
+    document.getElementById("cliente-cedula").value = cliente.cedula || "";
+    document.getElementById("cliente-rnc").value = cliente.rnc || "";
+    document.getElementById("cliente-telefono").value = cliente.telefono || "";
+    document.getElementById("cliente-email").value = cliente.email || "";
+    document.getElementById("cliente-direccion").value =
+      cliente.direccion || "";
     document.getElementById("modal-cliente").classList.remove("hidden");
   },
 
@@ -225,37 +284,134 @@ export const ClientesView = {
   },
 
   async guardarCliente() {
-    const cliente = {
-      id: this.editandoId,
-      nombre: document.getElementById("cliente-nombre").value,
-      apellido: document.getElementById("cliente-apellido").value,
-      cedula: document.getElementById("cliente-cedula").value,
-      rnc: document.getElementById("cliente-rnc").value,
-      telefono: document.getElementById("cliente-telefono").value,
-      email: document.getElementById("cliente-email").value,
-      direccion: document.getElementById("cliente-direccion").value,
-    };
-
-    if (!cliente.nombre) {
-      toast.error("El nombre del cliente es obligatorio.");
-      return;
-    }
-
     try {
+      // Obtener valores del formulario
+      const cliente = {
+        id: this.editandoId,
+        nombre: document.getElementById("cliente-nombre").value.trim(),
+        apellido: document.getElementById("cliente-apellido").value.trim(),
+        cedula: document.getElementById("cliente-cedula").value.trim(),
+        rnc: document.getElementById("cliente-rnc").value.trim(),
+        telefono: document.getElementById("cliente-telefono").value.trim(),
+        email: document.getElementById("cliente-email").value.trim(),
+        direccion: document.getElementById("cliente-direccion").value.trim(),
+      };
+
+      // ===== VALIDACIONES =====
+
+      // 1. Validar nombre requerido
+      if (!Validator.isNotEmpty(cliente.nombre)) {
+        toast.error("El nombre del cliente es requerido");
+        return;
+      }
+
+      // 2. Validar longitud de nombre
+      if (!Validator.isValidLength(cliente.nombre, 1, 100)) {
+        toast.error("El nombre debe tener entre 1 y 100 caracteres");
+        return;
+      }
+
+      // 3. Validar apellido si se proporciona
+      if (
+        cliente.apellido &&
+        !Validator.isValidLength(cliente.apellido, 1, 100)
+      ) {
+        toast.error("El apellido debe tener entre 1 y 100 caracteres");
+        return;
+      }
+
+      // 4. Validar RNC si se proporciona
+      if (cliente.rnc && !Validator.isValidRNC(cliente.rnc)) {
+        toast.error("El RNC ingresado no es válido. Debe tener 9 u 11 dígitos");
+        return;
+      }
+
+      // 5. Validar cédula si se proporciona
+      if (cliente.cedula && !Validator.isValidCedula(cliente.cedula)) {
+        toast.error("La cédula ingresada no es válida. Debe tener 11 dígitos");
+        return;
+      }
+
+      // 6. Validar que tenga al menos RNC o cédula
+      if (!cliente.rnc && !cliente.cedula) {
+        toast.error("Debe proporcionar al menos un RNC o cédula");
+        return;
+      }
+
+      // 7. Validar email si se proporciona
+      if (cliente.email && !Validator.isValidEmail(cliente.email)) {
+        toast.error("El email ingresado no es válido");
+        return;
+      }
+
+      // 8. Validar teléfono si se proporciona
+      if (cliente.telefono && !Validator.isValidTelefono(cliente.telefono)) {
+        toast.error(
+          "El teléfono ingresado no es válido. Debe ser un número dominicano (809/829/849)"
+        );
+        return;
+      }
+
+      // 9. Formatear datos
+      if (cliente.rnc) {
+        cliente.rnc = Validator.formatRNC(cliente.rnc);
+      }
+      if (cliente.cedula) {
+        cliente.cedula = Validator.formatCedula(cliente.cedula);
+      }
+      if (cliente.telefono) {
+        cliente.telefono = Validator.formatTelefono(cliente.telefono);
+      }
+
+      // 10. Sanitizar entrada
+      cliente.nombre = Validator.sanitizeInput(cliente.nombre);
+      cliente.apellido = Validator.sanitizeInput(cliente.apellido);
+      cliente.direccion = Validator.sanitizeInput(cliente.direccion);
+
+      // ===== GUARDAR EN BASE DE DATOS =====
+
       if (this.editandoId) {
-        await api.dbQuery(`UPDATE clientes SET nombre=?, apellido=?, cedula=?, rnc=?, telefono=?, email=?, direccion=? WHERE id=?`, 
-        [cliente.nombre, cliente.apellido, cliente.cedula, cliente.rnc, cliente.telefono, cliente.email, cliente.direccion, cliente.id]);
+        // Actualizar cliente existente
+        await api.dbQuery(
+          `UPDATE clientes 
+           SET nombre = ?, apellido = ?, cedula = ?, rnc = ?, 
+               telefono = ?, email = ?, direccion = ? 
+           WHERE id = ?`,
+          [
+            cliente.nombre,
+            cliente.apellido,
+            cliente.cedula,
+            cliente.rnc,
+            cliente.telefono,
+            cliente.email,
+            cliente.direccion,
+            cliente.id,
+          ]
+        );
         toast.success("Cliente actualizado correctamente");
       } else {
-        await api.dbQuery(`INSERT INTO clientes (nombre, apellido, cedula, rnc, telefono, email, direccion, activo) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-        [cliente.nombre, cliente.apellido, cliente.cedula, cliente.rnc, cliente.telefono, cliente.email, cliente.direccion]);
+        // Crear nuevo cliente
+        await api.dbQuery(
+          `INSERT INTO clientes 
+           (nombre, apellido, cedula, rnc, telefono, email, direccion, activo) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+          [
+            cliente.nombre,
+            cliente.apellido,
+            cliente.cedula,
+            cliente.rnc,
+            cliente.telefono,
+            cliente.email,
+            cliente.direccion,
+          ]
+        );
         toast.success("Cliente creado correctamente");
       }
+
       this.ocultarModal();
       await this.cargarClientes();
     } catch (error) {
-      console.error("Error guardando cliente:", error);
-      toast.error("Error al guardar el cliente");
+      handleError(error, "Error al guardar el cliente");
     }
   },
 

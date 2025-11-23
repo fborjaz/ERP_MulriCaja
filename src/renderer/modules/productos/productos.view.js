@@ -8,6 +8,8 @@ import { db } from "../../services/database.service.js";
 import { toast } from "../../components/notifications/toast.js";
 import { debounce } from "../../utils/helpers.js";
 import { formatCurrency } from "../../utils/helpers.js";
+import { Validator } from "../../utils/validator.util.js";
+import { handleError } from "../../utils/error-handler.js";
 
 export const ProductosView = {
   productos: [],
@@ -112,24 +114,39 @@ export const ProductosView = {
   },
 
   setupEventListeners() {
-    document.getElementById("btn-nuevo-producto").addEventListener("click", () => this.mostrarModalNuevo());
+    document
+      .getElementById("btn-nuevo-producto")
+      .addEventListener("click", () => this.mostrarModalNuevo());
     const searchInput = document.getElementById("productos-search");
-    searchInput.addEventListener("input", debounce(() => this.filtrarProductos(searchInput.value), 300));
+    searchInput.addEventListener(
+      "input",
+      debounce(() => this.filtrarProductos(searchInput.value), 300)
+    );
 
     // Modal listeners
-    document.getElementById("btn-cerrar-modal").addEventListener("click", () => this.ocultarModal());
-    document.getElementById("btn-cancelar-producto").addEventListener("click", () => this.ocultarModal());
+    document
+      .getElementById("btn-cerrar-modal")
+      .addEventListener("click", () => this.ocultarModal());
+    document
+      .getElementById("btn-cancelar-producto")
+      .addEventListener("click", () => this.ocultarModal());
     document.getElementById("modal-producto").addEventListener("click", (e) => {
-        if (e.target.id === "modal-producto") this.ocultarModal();
+      if (e.target.id === "modal-producto") this.ocultarModal();
     });
-    document.getElementById("btn-guardar-producto").addEventListener("click", () => this.guardarProducto());
+    document
+      .getElementById("btn-guardar-producto")
+      .addEventListener("click", () => this.guardarProducto());
   },
 
   async cargarCategorias() {
     try {
-      this.categorias = await api.dbQuery("SELECT * FROM categorias ORDER BY nombre");
+      this.categorias = await api.dbQuery(
+        "SELECT * FROM categorias ORDER BY nombre"
+      );
       const select = document.getElementById("producto-categoria");
-      select.innerHTML = this.categorias.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      select.innerHTML = this.categorias
+        .map((c) => `<option value="${c.id}">${c.nombre}</option>`)
+        .join("");
     } catch (error) {
       console.error("Error cargando categorías:", error);
       toast.error("Error al cargar categorías");
@@ -149,12 +166,15 @@ export const ProductosView = {
   mostrarProductos() {
     const tbody = document.getElementById("productos-table-body");
     if (this.productos.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No se encontraron productos</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="8" style="text-align: center;">No se encontraron productos</td></tr>';
       return;
     }
-    tbody.innerHTML = this.productos.map(p => `
+    tbody.innerHTML = this.productos
+      .map(
+        (p) => `
       <tr class="${p.stock_actual <= p.stock_minimo ? "text-danger" : ""}">
-        <td>${p.codigo || 'N/A'}</td>
+        <td>${p.codigo || "N/A"}</td>
         <td>${p.nombre}</td>
         <td>${p.categoria_nombre}</td>
         <td>${formatCurrency(p.precio_costo)}</td>
@@ -162,14 +182,32 @@ export const ProductosView = {
         <td>${p.stock_actual}</td>
         <td>${p.stock_minimo}</td>
         <td>
-          <button class="btn btn-sm btn-secondary btn-editar" data-id="${p.id}"><span class="material-icons">edit</span></button>
-          <button class="btn btn-sm btn-danger btn-eliminar" data-id="${p.id}"><span class="material-icons">delete</span></button>
+          <button class="btn btn-sm btn-secondary btn-editar" data-id="${
+            p.id
+          }"><span class="material-icons">edit</span></button>
+          <button class="btn btn-sm btn-danger btn-eliminar" data-id="${
+            p.id
+          }"><span class="material-icons">delete</span></button>
         </td>
       </tr>
-    `).join("");
+    `
+      )
+      .join("");
 
-    tbody.querySelectorAll(".btn-editar").forEach(btn => btn.addEventListener("click", () => this.editarProducto(parseInt(btn.dataset.id))));
-    tbody.querySelectorAll(".btn-eliminar").forEach(btn => btn.addEventListener("click", () => this.eliminarProducto(parseInt(btn.dataset.id))));
+    tbody
+      .querySelectorAll(".btn-editar")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          this.editarProducto(parseInt(btn.dataset.id))
+        )
+      );
+    tbody
+      .querySelectorAll(".btn-eliminar")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          this.eliminarProducto(parseInt(btn.dataset.id))
+        )
+      );
   },
 
   filtrarProductos(filtro) {
@@ -178,28 +216,35 @@ export const ProductosView = {
 
   mostrarModalNuevo() {
     this.editandoId = null;
-    document.getElementById("modal-producto-titulo").textContent = "Nuevo Producto";
+    document.getElementById("modal-producto-titulo").textContent =
+      "Nuevo Producto";
     document.getElementById("form-producto").reset();
     document.getElementById("modal-producto").classList.remove("hidden");
   },
 
   async editarProducto(id) {
-    const producto = this.productos.find(p => p.id === id);
+    const producto = this.productos.find((p) => p.id === id);
     if (!producto) {
       toast.error("Producto no encontrado");
       return;
     }
     this.editandoId = id;
-    document.getElementById("modal-producto-titulo").textContent = "Editar Producto";
+    document.getElementById("modal-producto-titulo").textContent =
+      "Editar Producto";
     document.getElementById("producto-id-form").value = producto.id;
     document.getElementById("producto-codigo").value = producto.codigo;
     document.getElementById("producto-nombre-form").value = producto.nombre;
     document.getElementById("producto-categoria").value = producto.categoria_id;
-    document.getElementById("producto-precio-costo").value = producto.precio_costo;
-    document.getElementById("producto-precio-venta").value = producto.precio_venta;
-    document.getElementById("producto-stock-actual").value = producto.stock_actual;
-    document.getElementById("producto-stock-minimo").value = producto.stock_minimo;
-    document.getElementById("producto-descripcion").value = producto.descripcion;
+    document.getElementById("producto-precio-costo").value =
+      producto.precio_costo;
+    document.getElementById("producto-precio-venta").value =
+      producto.precio_venta;
+    document.getElementById("producto-stock-actual").value =
+      producto.stock_actual;
+    document.getElementById("producto-stock-minimo").value =
+      producto.stock_minimo;
+    document.getElementById("producto-descripcion").value =
+      producto.descripcion;
     document.getElementById("modal-producto").classList.remove("hidden");
   },
 
@@ -208,45 +253,175 @@ export const ProductosView = {
   },
 
   async guardarProducto() {
-    const producto = {
-      id: this.editandoId,
-      codigo: document.getElementById("producto-codigo").value,
-      nombre: document.getElementById("producto-nombre-form").value,
-      categoria_id: document.getElementById("producto-categoria").value,
-      precio_costo: parseFloat(document.getElementById("producto-precio-costo").value),
-      precio_venta: parseFloat(document.getElementById("producto-precio-venta").value),
-      stock_actual: parseInt(document.getElementById("producto-stock-actual").value),
-      stock_minimo: parseInt(document.getElementById("producto-stock-minimo").value),
-      descripcion: document.getElementById("producto-descripcion").value,
-    };
-
-    if (!producto.nombre || !producto.codigo) {
-        toast.error("El código y el nombre son obligatorios.");
-        return;
-    }
-
     try {
+      // Obtener valores del formulario
+      const producto = {
+        id: this.editandoId,
+        codigo: document.getElementById("producto-codigo").value.trim(),
+        nombre: document.getElementById("producto-nombre-form").value.trim(),
+        categoria_id: parseInt(
+          document.getElementById("producto-categoria").value
+        ),
+        precio_costo: parseFloat(
+          document.getElementById("producto-precio-costo").value
+        ),
+        precio_venta: parseFloat(
+          document.getElementById("producto-precio-venta").value
+        ),
+        stock_actual: parseInt(
+          document.getElementById("producto-stock-actual").value
+        ),
+        stock_minimo: parseInt(
+          document.getElementById("producto-stock-minimo").value
+        ),
+        descripcion: document
+          .getElementById("producto-descripcion")
+          .value.trim(),
+      };
+
+      // ===== VALIDACIONES =====
+
+      // 1. Validar campos requeridos
+      if (!Validator.isNotEmpty(producto.codigo)) {
+        toast.error("El código del producto es requerido");
+        return;
+      }
+
+      if (!Validator.isNotEmpty(producto.nombre)) {
+        toast.error("El nombre del producto es requerido");
+        return;
+      }
+
+      // 2. Validar longitud de campos
+      if (!Validator.isValidLength(producto.codigo, 1, 50)) {
+        toast.error("El código debe tener entre 1 y 50 caracteres");
+        return;
+      }
+
+      if (!Validator.isValidLength(producto.nombre, 1, 200)) {
+        toast.error("El nombre debe tener entre 1 y 200 caracteres");
+        return;
+      }
+
+      // 3. Validar que los precios sean números positivos
+      if (!Validator.isPositiveNumber(producto.precio_costo)) {
+        toast.error("El precio de costo debe ser un número positivo");
+        return;
+      }
+
+      if (!Validator.isPositiveNumber(producto.precio_venta)) {
+        toast.error("El precio de venta debe ser un número positivo");
+        return;
+      }
+
+      // 4. Validar que precio de venta sea mayor que precio de costo
+      if (
+        !Validator.isValidPricing(producto.precio_venta, producto.precio_costo)
+      ) {
+        toast.error("El precio de venta debe ser mayor que el precio de costo");
+        return;
+      }
+
+      // 5. Validar stock (números no negativos)
+      if (!Validator.isNonNegativeNumber(producto.stock_actual)) {
+        toast.error("El stock actual debe ser un número no negativo");
+        return;
+      }
+
+      if (!Validator.isNonNegativeNumber(producto.stock_minimo)) {
+        toast.error("El stock mínimo debe ser un número no negativo");
+        return;
+      }
+
+      // 6. Validar que stock mínimo sea lógico
+      if (producto.stock_minimo > producto.stock_actual + 1000) {
+        toast.error(
+          "El stock mínimo parece demasiado alto comparado con el stock actual"
+        );
+        return;
+      }
+
+      // 7. Validar código único (solo al crear o si se cambió el código)
+      if (
+        !this.editandoId ||
+        producto.codigo !==
+          this.productos.find((p) => p.id === this.editandoId)?.codigo
+      ) {
+        const codigoExiste = await api.dbQuery(
+          "SELECT id FROM productos WHERE codigo = ? AND activo = 1",
+          [producto.codigo]
+        );
+
+        if (codigoExiste.length > 0) {
+          toast.error(
+            `El código "${producto.codigo}" ya está en uso por otro producto`
+          );
+          return;
+        }
+      }
+
+      // 8. Sanitizar entrada
+      producto.codigo = Validator.sanitizeInput(producto.codigo);
+      producto.nombre = Validator.sanitizeInput(producto.nombre);
+      producto.descripcion = Validator.sanitizeInput(producto.descripcion);
+
+      // ===== GUARDAR EN BASE DE DATOS =====
+
       if (this.editandoId) {
-        // Actualizar producto
-        await api.dbQuery(`UPDATE productos SET codigo=?, nombre=?, categoria_id=?, precio_costo=?, precio_venta=?, stock_actual=?, stock_minimo=?, descripcion=? WHERE id=?`, 
-        [producto.codigo, producto.nombre, producto.categoria_id, producto.precio_costo, producto.precio_venta, producto.stock_actual, producto.stock_minimo, producto.descripcion, producto.id]);
+        // Actualizar producto existente
+        await api.dbQuery(
+          `UPDATE productos 
+           SET codigo = ?, nombre = ?, categoria_id = ?, precio_costo = ?, 
+               precio_venta = ?, stock_actual = ?, stock_minimo = ?, descripcion = ? 
+           WHERE id = ?`,
+          [
+            producto.codigo,
+            producto.nombre,
+            producto.categoria_id,
+            producto.precio_costo,
+            producto.precio_venta,
+            producto.stock_actual,
+            producto.stock_minimo,
+            producto.descripcion,
+            producto.id,
+          ]
+        );
         toast.success("Producto actualizado correctamente");
       } else {
-        // Crear producto
-        await api.dbQuery(`INSERT INTO productos (codigo, nombre, categoria_id, precio_costo, precio_venta, stock_actual, stock_minimo, descripcion, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-        [producto.codigo, producto.nombre, producto.categoria_id, producto.precio_costo, producto.precio_venta, producto.stock_actual, producto.stock_minimo, producto.descripcion]);
+        // Crear nuevo producto
+        await api.dbQuery(
+          `INSERT INTO productos 
+           (codigo, nombre, categoria_id, precio_costo, precio_venta, 
+            stock_actual, stock_minimo, descripcion, activo) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+          [
+            producto.codigo,
+            producto.nombre,
+            producto.categoria_id,
+            producto.precio_costo,
+            producto.precio_venta,
+            producto.stock_actual,
+            producto.stock_minimo,
+            producto.descripcion,
+          ]
+        );
         toast.success("Producto creado correctamente");
       }
+
       this.ocultarModal();
       await this.cargarProductos();
     } catch (error) {
-      console.error("Error guardando producto:", error);
-      toast.error("Error al guardar el producto");
+      handleError(error, "Error al guardar el producto");
     }
   },
 
   async eliminarProducto(id) {
-    if (!confirm("¿Está seguro de que desea eliminar este producto? Esta acción no se puede deshacer.")) return;
+    if (
+      !confirm(
+        "¿Está seguro de que desea eliminar este producto? Esta acción no se puede deshacer."
+      )
+    )
+      return;
     try {
       await api.dbQuery("UPDATE productos SET activo = 0 WHERE id = ?", [id]);
       toast.success("Producto eliminado correctamente");

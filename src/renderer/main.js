@@ -98,6 +98,22 @@ async function initialize() {
   // Configurar error handlers globales
   setupGlobalErrorHandlers();
 
+  // Verificar si el setup inicial está completado
+  const setupCompleted = await checkSetupCompleted();
+
+  if (!setupCompleted) {
+    // Primera vez - mostrar wizard de configuración
+    showScreen("setup-screen");
+    const { SetupView } = await import("./modules/setup/setup.view.js");
+
+    // Renderizar y inicializar setup
+    const setupContainer = document.getElementById("setup-screen");
+    setupContainer.innerHTML = SetupView.render();
+    await SetupView.init();
+    return;
+  }
+
+  // Setup completado - flujo normal
   const isAuthenticated = authService.isAuthenticated();
 
   if (isAuthenticated) {
@@ -109,6 +125,24 @@ async function initialize() {
     // Inicializa la lógica de la pantalla de login
     const { LoginView } = await import("./modules/login/login.view.js");
     LoginView.init();
+  }
+}
+
+/**
+ * Verifica si el setup inicial está completado
+ * @returns {Promise<boolean>} true si está completado
+ */
+async function checkSetupCompleted() {
+  try {
+    const result = await api.dbQuery(
+      "SELECT valor FROM configuracion WHERE clave = 'setup_completed'",
+      []
+    );
+    return result.length > 0 && result[0].valor === "true";
+  } catch (error) {
+    console.error("Error verificando setup:", error);
+    // Si hay error, asumir que no está completado
+    return false;
   }
 }
 

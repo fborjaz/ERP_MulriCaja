@@ -6,10 +6,12 @@
 import { api } from "../../core/api.js";
 import { toast } from "../../components/notifications/toast.js";
 import { formatDate, formatCurrency } from "../../utils/helpers.js";
+import { Validator } from "../../utils/validator.util.js";
+import { handleError } from "../../utils/error-handler.js";
 
 export const ComprasView = {
   compras: [],
-  
+
   render() {
     return `
       <div class="view-container">
@@ -90,12 +92,20 @@ export const ComprasView = {
   },
 
   setupEventListeners() {
-    document.getElementById("btn-nueva-compra").addEventListener("click", () => this.nuevaCompra());
-    
+    document
+      .getElementById("btn-nueva-compra")
+      .addEventListener("click", () => this.nuevaCompra());
+
     // Modal listeners
-    document.getElementById("btn-cerrar-modal-compra").addEventListener("click", () => this.ocultarModal());
-    document.getElementById("btn-cancelar-compra").addEventListener("click", () => this.ocultarModal());
-    document.getElementById("btn-guardar-compra").addEventListener("click", () => this.guardarCompra());
+    document
+      .getElementById("btn-cerrar-modal-compra")
+      .addEventListener("click", () => this.ocultarModal());
+    document
+      .getElementById("btn-cancelar-compra")
+      .addEventListener("click", () => this.ocultarModal());
+    document
+      .getElementById("btn-guardar-compra")
+      .addEventListener("click", () => this.guardarCompra());
   },
 
   async cargarCompras() {
@@ -113,61 +123,120 @@ export const ComprasView = {
   mostrarCompras() {
     const tbody = document.getElementById("compras-table-body");
     if (this.compras.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay compras registradas</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="6" style="text-align: center;">No hay compras registradas</td></tr>';
       return;
     }
-    tbody.innerHTML = this.compras.map(c => `
+    tbody.innerHTML = this.compras
+      .map(
+        (c) => `
       <tr>
         <td>${c.numero || c.id}</td>
         <td>${formatDate(c.fecha)}</td>
-        <td>${c.proveedor_nombre || 'N/A'}</td>
+        <td>${c.proveedor_nombre || "N/A"}</td>
         <td>${formatCurrency(c.total)}</td>
-        <td><span class="badge badge-${(c.estado || '').toLowerCase()}">${c.estado}</span></td>
+        <td><span class="badge badge-${(c.estado || "").toLowerCase()}">${
+          c.estado
+        }</span></td>
         <td>
-          <button class="btn btn-sm btn-secondary btn-ver" data-id="${c.id}"><span class="material-icons">visibility</span></button>
+          <button class="btn btn-sm btn-secondary btn-ver" data-id="${
+            c.id
+          }"><span class="material-icons">visibility</span></button>
         </td>
       </tr>
-    `).join('');
+    `
+      )
+      .join("");
 
-    tbody.querySelectorAll(".btn-ver").forEach(btn => btn.addEventListener("click", () => this.verCompra(parseInt(btn.dataset.id))));
+    tbody
+      .querySelectorAll(".btn-ver")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          this.verCompra(parseInt(btn.dataset.id))
+        )
+      );
   },
 
   nuevaCompra() {
     document.getElementById("form-compra").reset();
     document.getElementById("modal-compra").classList.remove("hidden");
   },
-  
+
   ocultarModal() {
     document.getElementById("modal-compra").classList.add("hidden");
   },
 
   async guardarCompra() {
-    const total = parseFloat(document.getElementById("compra-total").value);
-    const estado = document.getElementById("compra-estado").value;
-    const numero = document.getElementById("compra-numero").value;
-    // Lógica para buscar o crear proveedor omitida por simplicidad
-    
-    if (!total || total <= 0) {
-      toast.error("El monto total es obligatorio.");
-      return;
-    }
-
     try {
+      const total = parseFloat(document.getElementById("compra-total").value);
+      const estado = document.getElementById("compra-estado").value;
+      const numero = document.getElementById("compra-numero").value.trim();
+      const proveedor = document
+        .getElementById("compra-proveedor")
+        .value.trim();
+
+      // ===== VALIDACIONES =====
+
+      // 1. Validar total positivo
+      if (!Validator.isPositiveNumber(total)) {
+        toast.error("El monto total debe ser un número positivo");
+        return;
+      }
+
+      // 2. Validar total razonable (máximo 10 millones)
+      if (total > 10000000) {
+        toast.error(
+          "El monto total parece demasiado alto. Verifique el valor."
+        );
+        return;
+      }
+
+      // 3. Validar estado
+      const estadosValidos = ["Pagada", "Pendiente"];
+      if (!estadosValidos.includes(estado)) {
+        toast.error("Estado inválido");
+        return;
+      }
+
+      // 4. Validar número de factura si se proporciona
+      if (numero && !Validator.isValidLength(numero, 1, 50)) {
+        toast.error("El número de factura debe tener entre 1 y 50 caracteres");
+        return;
+      }
+
+      // 5. Validar proveedor si se proporciona
+      if (proveedor && !Validator.isValidLength(proveedor, 1, 200)) {
+        toast.error(
+          "El nombre del proveedor debe tener entre 1 y 200 caracteres"
+        );
+        return;
+      }
+
+      // 6. Sanitizar entrada
+      const numeroSanitizado = Validator.sanitizeInput(numero);
+      const proveedorSanitizado = Validator.sanitizeInput(proveedor);
+
+      // ===== GUARDAR EN BASE DE DATOS =====
+
       await api.dbQuery(
         `INSERT INTO compras (fecha, total, estado, numero) VALUES (datetime('now'), ?, ?, ?)`,
-        [total, estado, numero]
+        [total, estado, numeroSanitizado]
       );
-      toast.success("Compra registrada exitosamente.");
+
+      toast.success(
+        `Compra registrada exitosamente. Total: ${formatCurrency(total)}`
+      );
       this.ocultarModal();
       await this.cargarCompras();
     } catch (error) {
-      console.error("Error guardando compra:", error);
-      toast.error("Error al registrar la compra.");
+      handleError(error, "Error al registrar la compra");
     }
   },
 
   async verCompra(id) {
-    toast.info(`Ver detalles de la compra #${id} (funcionalidad en desarrollo).`);
+    toast.info(
+      `Ver detalles de la compra #${id} (funcionalidad en desarrollo).`
+    );
   },
 };
 

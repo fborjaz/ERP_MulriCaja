@@ -18,4 +18,5 @@
 /* Utilidades */
 @import "./utilities.css";
 @import "./login.css";
+@import "./setup.css";
 @import "./modals.css";

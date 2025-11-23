@@ -6,6 +6,8 @@
 import { api } from "../../core/api.js";
 import { toast } from "../../components/notifications/toast.js";
 import { formatDate } from "../../utils/helpers.js";
+import { Validator } from "../../utils/validator.util.js";
+import { handleError } from "../../utils/error-handler.js";
 
 export const DespachosView = {
   despachos: [],
@@ -79,12 +81,20 @@ export const DespachosView = {
   },
 
   setupEventListeners() {
-    document.getElementById("btn-nuevo-despacho").addEventListener("click", () => this.nuevoDespacho());
-    
+    document
+      .getElementById("btn-nuevo-despacho")
+      .addEventListener("click", () => this.nuevoDespacho());
+
     // Modal listeners
-    document.getElementById("btn-cerrar-modal-despacho").addEventListener("click", () => this.ocultarModal());
-    document.getElementById("btn-cancelar-despacho").addEventListener("click", () => this.ocultarModal());
-    document.getElementById("btn-guardar-despacho").addEventListener("click", () => this.guardarDespacho());
+    document
+      .getElementById("btn-cerrar-modal-despacho")
+      .addEventListener("click", () => this.ocultarModal());
+    document
+      .getElementById("btn-cancelar-despacho")
+      .addEventListener("click", () => this.ocultarModal());
+    document
+      .getElementById("btn-guardar-despacho")
+      .addEventListener("click", () => this.guardarDespacho());
   },
 
   async cargarDespachos() {
@@ -107,25 +117,50 @@ export const DespachosView = {
   mostrarDespachos() {
     const tbody = document.getElementById("despachos-table-body");
     if (this.despachos.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay despachos pendientes o registrados</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="6" style="text-align: center;">No hay despachos pendientes o registrados</td></tr>';
       return;
     }
-    tbody.innerHTML = this.despachos.map(d => `
+    tbody.innerHTML = this.despachos
+      .map(
+        (d) => `
       <tr>
         <td>${d.id}</td>
         <td>${formatDate(d.fecha)}</td>
         <td>${d.numero_factura || "-"}</td>
         <td>${d.conductor_nombre || "N/A"}</td>
-        <td><span class="badge badge-${(d.estado || '').toLowerCase()}">${d.estado}</span></td>
+        <td><span class="badge badge-${(d.estado || "").toLowerCase()}">${
+          d.estado
+        }</span></td>
         <td>
-          <button class="btn btn-sm btn-secondary btn-ver" data-id="${d.id}"><span class="material-icons">visibility</span></button>
-          ${d.estado !== 'Completado' ? `<button class="btn btn-sm btn-success btn-completar" data-id="${d.id}"><span class="material-icons">check_circle</span></button>` : ''}
+          <button class="btn btn-sm btn-secondary btn-ver" data-id="${
+            d.id
+          }"><span class="material-icons">visibility</span></button>
+          ${
+            d.estado !== "Completado"
+              ? `<button class="btn btn-sm btn-success btn-completar" data-id="${d.id}"><span class="material-icons">check_circle</span></button>`
+              : ""
+          }
         </td>
       </tr>
-    `).join("");
+    `
+      )
+      .join("");
 
-    tbody.querySelectorAll(".btn-ver").forEach(btn => btn.addEventListener("click", () => this.verDespacho(parseInt(btn.dataset.id))));
-    tbody.querySelectorAll(".btn-completar").forEach(btn => btn.addEventListener("click", () => this.completar(parseInt(btn.dataset.id))));
+    tbody
+      .querySelectorAll(".btn-ver")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          this.verDespacho(parseInt(btn.dataset.id))
+        )
+      );
+    tbody
+      .querySelectorAll(".btn-completar")
+      .forEach((btn) =>
+        btn.addEventListener("click", () =>
+          this.completar(parseInt(btn.dataset.id))
+        )
+      );
   },
 
   nuevoDespacho() {
@@ -138,40 +173,94 @@ export const DespachosView = {
   },
 
   async guardarDespacho() {
-    const ventaId = document.getElementById("despacho-venta-id").value;
-    const conductorId = document.getElementById("despacho-conductor-id").value;
-    const direccion = document.getElementById("despacho-direccion").value;
-
-    if (!ventaId || !conductorId || !direccion) {
-      toast.error("Todos los campos son obligatorios.");
-      return;
-    }
-
     try {
-      await api.dbQuery(
-        `INSERT INTO despachos (venta_id, conductor_id, direccion, estado, fecha) VALUES (?, ?, ?, 'Pendiente', datetime('now'))`,
-        [ventaId, conductorId, direccion]
+      const ventaId = parseInt(
+        document.getElementById("despacho-venta-id").value
       );
-      toast.success("Despacho creado exitosamente.");
+      const conductorId = document
+        .getElementById("despacho-conductor-id")
+        .value.trim();
+      const direccion = document
+        .getElementById("despacho-direccion")
+        .value.trim();
+
+      // ===== VALIDACIONES =====
+
+      // 1. Validar ID de venta
+      if (!Validator.isPositiveNumber(ventaId)) {
+        toast.error("El ID de la venta debe ser un número positivo");
+        return;
+      }
+
+      // 2. Validar conductor
+      if (!Validator.isNotEmpty(conductorId)) {
+        toast.error("El conductor es requerido");
+        return;
+      }
+
+      if (!Validator.isValidLength(conductorId, 1, 100)) {
+        toast.error("El conductor debe tener entre 1 y 100 caracteres");
+        return;
+      }
+
+      // 3. Validar dirección
+      if (!Validator.isNotEmpty(direccion)) {
+        toast.error("La dirección de entrega es requerida");
+        return;
+      }
+
+      if (!Validator.isValidLength(direccion, 10, 500)) {
+        toast.error("La dirección debe tener entre 10 y 500 caracteres");
+        return;
+      }
+
+      // 4. Verificar que la venta existe
+      const ventaExiste = await api.dbQuery(
+        "SELECT id FROM ventas WHERE id = ?",
+        [ventaId]
+      );
+
+      if (ventaExiste.length === 0) {
+        toast.error(`No se encontró la venta con ID ${ventaId}`);
+        return;
+      }
+
+      // 5. Sanitizar entrada
+      const conductorSanitizado = Validator.sanitizeInput(conductorId);
+      const direccionSanitizada = Validator.sanitizeInput(direccion);
+
+      // ===== GUARDAR EN BASE DE DATOS =====
+
+      await api.dbQuery(
+        `INSERT INTO despachos (venta_id, conductor_id, direccion, estado, fecha) 
+         VALUES (?, ?, ?, 'Pendiente', datetime('now'))`,
+        [ventaId, conductorSanitizado, direccionSanitizada]
+      );
+
+      toast.success(`Despacho creado exitosamente para venta #${ventaId}`);
       this.ocultarModal();
       await this.cargarDespachos();
-    } catch(error) {
-      console.error("Error creando despacho:", error);
-      toast.error("Error al crear el despacho.");
+    } catch (error) {
+      handleError(error, "Error al crear el despacho");
     }
   },
 
   verDespacho(id) {
-    const despacho = this.despachos.find(d => d.id === id);
-    if(despacho) {
-        alert(`Detalles del Despacho #${id}:\nFactura: ${despacho.numero_factura}\nDirección: ${despacho.direccion}\nEstado: ${despacho.estado}`);
+    const despacho = this.despachos.find((d) => d.id === id);
+    if (despacho) {
+      alert(
+        `Detalles del Despacho #${id}:\nFactura: ${despacho.numero_factura}\nDirección: ${despacho.direccion}\nEstado: ${despacho.estado}`
+      );
     }
   },
 
   async completar(id) {
     if (!confirm("¿Marcar este despacho como completado?")) return;
     try {
-      await api.dbQuery("UPDATE despachos SET estado = 'Completado' WHERE id = ?", [id]);
+      await api.dbQuery(
+        "UPDATE despachos SET estado = 'Completado' WHERE id = ?",
+        [id]
+      );
       toast.success("Despacho completado");
       await this.cargarDespachos();
     } catch (error) {
