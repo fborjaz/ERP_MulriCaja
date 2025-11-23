@@ -19,7 +19,7 @@ export const DashboardView = {
       <div class="view-container">
         <!-- Tarjetas de Estadísticas -->
         <div class="stat-cards-container">
-          <div class="stat-card">
+          <div class="stat-card stat-card-primary">
             <div class="stat-card-icon icon-ventas">
               <span class="material-icons">point_of_sale</span>
             </div>
@@ -28,7 +28,7 @@ export const DashboardView = {
               <h3 id="ventas-hoy">0</h3>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card stat-card-success">
             <div class="stat-card-icon icon-ingresos">
               <span class="material-icons">attach_money</span>
             </div>
@@ -37,7 +37,7 @@ export const DashboardView = {
               <h3 id="ingresos-hoy">$0.00</h3>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card stat-card-danger">
             <div class="stat-card-icon icon-stock">
               <span class="material-icons">warning</span>
             </div>
@@ -46,7 +46,7 @@ export const DashboardView = {
               <h3 id="productos-bajo-stock">0</h3>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card stat-card-warning">
             <div class="stat-card-icon icon-productos">
               <span class="material-icons">inventory_2</span>
             </div>
@@ -83,7 +83,7 @@ export const DashboardView = {
       </div>
     `;
   },
-  
+
   /**
    * Inicializa la lógica del dashboard después de renderizar
    */
@@ -113,14 +113,18 @@ export const DashboardView = {
   async cargarEstadisticas() {
     // Llama al método correcto: getEstadisticas()
     const stats = await db.getEstadisticas();
-    
+
     // Obtener el conteo de productos bajo stock por separado
     const productosBajoStockList = await db.getProductosBajoStock();
 
     document.getElementById("ventas-hoy").textContent = stats.ventas_hoy || 0;
-    document.getElementById("ingresos-hoy").textContent = formatCurrency(stats.ingresos_hoy || 0);
-    document.getElementById("productos-bajo-stock").textContent = productosBajoStockList.length || 0;
-    document.getElementById("total-productos").textContent = stats.total_productos || 0;
+    document.getElementById("ingresos-hoy").textContent = formatCurrency(
+      stats.ingresos_hoy || 0
+    );
+    document.getElementById("productos-bajo-stock").textContent =
+      productosBajoStockList.length || 0;
+    document.getElementById("total-productos").textContent =
+      stats.total_productos || 0;
   },
 
   /**
@@ -133,7 +137,8 @@ export const DashboardView = {
     if (!tbody) return;
 
     if (productos.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay productos con stock bajo</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="4" style="text-align: center;">No hay productos con stock bajo</td></tr>';
       return;
     }
 
@@ -141,7 +146,7 @@ export const DashboardView = {
       .map(
         (p) => `
       <tr>
-        <td>${p.codigo || 'N/A'}</td>
+        <td>${p.codigo || "N/A"}</td>
         <td>${p.nombre}</td>
         <td class="text-danger">${p.stock_actual}</td>
         <td>${p.stock_minimo}</td>
@@ -173,7 +178,7 @@ export const DashboardView = {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-  }
+  },
 };
 
 export default DashboardView;
