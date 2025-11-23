@@ -263,3 +263,18 @@ CREATE TABLE IF NOT EXISTS asientos_contables (
 
 -- Tabla de Notas de Crédito
 CREATE TABLE IF NOT EXISTS notas_credito (
+
+
+-- Tabla de Notas de CrÃ©dito
+CREATE TABLE IF NOT EXISTS notas_credito (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  venta_id INTEGER NOT NULL,
+  cliente_id INTEGER,
+  monto REAL NOT NULL,
+  razon TEXT,
+  fecha TEXT NOT NULL,
+  estado TEXT DEFAULT 'Emitida',
+  FOREIGN KEY (venta_id) REFERENCES ventas(id),
+  FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+);
+
