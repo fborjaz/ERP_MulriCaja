@@ -28,6 +28,20 @@ contextBridge.exposeInMainWorld("api", {
   exportExcel: (tipo, datos, opciones) =>
     ipcRenderer.invoke("export-excel", tipo, datos, opciones),
 
+  // Sincronización
+  syncFull: () => ipcRenderer.invoke("sync-full"),
+  syncPull: () => ipcRenderer.invoke("sync-pull"),
+  syncPush: () => ipcRenderer.invoke("sync-push"),
+  syncCheckConnection: () => ipcRenderer.invoke("sync-check-connection"),
+  syncGetStats: () => ipcRenderer.invoke("sync-get-stats"),
+  syncConfigure: (config) => ipcRenderer.invoke("sync-configure", config),
+  syncGetConfig: () => ipcRenderer.invoke("sync-get-config"),
+  syncGetLog: (limit) => ipcRenderer.invoke("sync-get-log", limit),
+  syncGetConflicts: () => ipcRenderer.invoke("sync-get-conflicts"),
+  syncResolveConflict: (conflictId, resolution) => 
+    ipcRenderer.invoke("sync-resolve-conflict", conflictId, resolution),
+  syncCleanLog: (days) => ipcRenderer.invoke("sync-clean-log", days),
+
   // Sistema
   getSystemInfo: () => ipcRenderer.invoke("get-system-info"),
   appQuit: () => ipcRenderer.send("app-quit"),

@@ -60,18 +60,19 @@ export class DatabaseService {
    * @returns {Promise<Array>} Lista de productos
    */
   async getProductos(filtro = "") {
+    // Usar tabla producto (singular) según esquema IMAXPOS
     let sql =
-      "SELECT p.*, c.nombre as categoria_nombre FROM productos p JOIN categorias c ON c.id = p.categoria_id WHERE p.activo = 1";
+      "SELECT p.* FROM producto p WHERE p.producto_estatus = 1";
     let params = [];
 
     if (filtro) {
       sql +=
-        " AND (p.codigo LIKE ? OR p.nombre LIKE ? OR p.codigo_barras LIKE ?)";
+        " AND (p.producto_codigo_interno LIKE ? OR p.producto_nombre LIKE ? OR p.producto_codigo_barra LIKE ?)";
       const search = `%${filtro}%`;
       params = [search, search, search];
     }
 
-    sql += " ORDER BY p.nombre";
+    sql += " ORDER BY p.producto_nombre";
     return await this.query(sql, params);
   }
 
@@ -82,7 +83,7 @@ export class DatabaseService {
    */
   async getProducto(id) {
     const result = await this.query(
-      "SELECT p.*, c.nombre as categoria_nombre FROM productos p JOIN categorias c ON c.id = p.categoria_id WHERE p.id = ?",
+      "SELECT * FROM producto WHERE producto_id = ?",
       [id]
     );
     return result[0];
@@ -93,8 +94,14 @@ export class DatabaseService {
    * @returns {Promise<Array>} Productos con stock bajo
    */
   async getProductosBajoStock() {
+    // Verificar stock desde producto_almacen
     return await this.query(
-      "SELECT p.*, c.nombre as categoria_nombre FROM productos p JOIN categorias c ON c.id = p.categoria_id WHERE p.stock_actual <= p.stock_minimo AND p.activo = 1 ORDER BY p.stock_actual"
+      `SELECT p.*, pa.cantidad as stock_actual 
+       FROM producto p 
+       LEFT JOIN producto_almacen pa ON pa.id_producto = p.producto_id 
+       WHERE p.producto_estatus = 1 
+       AND (pa.cantidad IS NULL OR pa.cantidad <= p.producto_stockminimo)
+       ORDER BY COALESCE(pa.cantidad, 0)`
     );
   }
 
@@ -105,8 +112,9 @@ export class DatabaseService {
    * @returns {Promise<Array>} Lista de clientes
    */
   async getClientes() {
+    // Usar tabla cliente (singular) según esquema IMAXPOS
     return await this.query(
-      "SELECT * FROM clientes WHERE activo = 1 ORDER BY nombre"
+      "SELECT * FROM cliente WHERE cliente_status = 1 ORDER BY nombre_comercial"
     );
   }
 
@@ -116,7 +124,7 @@ export class DatabaseService {
    * @returns {Promise<Object>} Cliente
    */
   async getCliente(id) {
-    const result = await this.query("SELECT * FROM clientes WHERE id = ?", [
+    const result = await this.query("SELECT * FROM cliente WHERE id_cliente = ?", [
       id,
     ]);
     return result[0];
@@ -242,9 +250,11 @@ export class DatabaseService {
         ]
       );
 
-      // Actualizar stock
+      // Actualizar stock en producto_almacen
       await this.query(
-        "UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?",
+        `UPDATE producto_almacen 
+         SET cantidad = cantidad - ? 
+         WHERE id_producto = ? AND id_local = 1`,
         [item.cantidad, item.producto_id]
       );
     }
@@ -267,13 +277,13 @@ export class DatabaseService {
 
     const ventasHoy = await this.query(
       `SELECT COUNT(*) as total, COALESCE(SUM(total), 0) as ingresos
-       FROM ventas
-       WHERE DATE(fecha) = ? AND estado = 'Completada'`,
+       FROM venta
+       WHERE DATE(fecha) = ? AND venta_status = 'Completada'`,
       [hoy]
     );
 
     const totalProductos = await this.query(
-      "SELECT COUNT(*) as total FROM productos WHERE activo = 1"
+      "SELECT COUNT(*) as total FROM producto WHERE producto_estatus = 1"
     );
 
     return {

@@ -99,12 +99,18 @@ export const DespachosView = {
 
   async cargarDespachos() {
     try {
+      // Usar tabla venta (singular) con campo delivery según esquema IMAXPOS
       this.despachos = await api.dbQuery(
-        `SELECT d.*, v.numero_factura, c.nombre as conductor_nombre
-         FROM despachos d
-         LEFT JOIN ventas v ON v.id = d.venta_id
-         LEFT JOIN usuarios c ON c.id = d.conductor_id
-         ORDER BY d.fecha DESC
+        `SELECT v.venta_id as id, v.numero_factura, v.fecha, v.FechaEntrega as fecha_entrega,
+                v.delivery, v.total, v.venta_status as estado,
+                c.nombre_comercial as cliente_nombre, c.telefono1 as cliente_telefono,
+                c.direccion as cliente_direccion,
+                u.nombre as vendedor_nombre
+         FROM venta v
+         LEFT JOIN cliente c ON c.id_cliente = v.id_cliente
+         LEFT JOIN usuario u ON u.nUsuCodigo = v.id_vendedor
+         WHERE v.delivery = 1
+         ORDER BY v.fecha DESC
          LIMIT 100`
       );
       this.mostrarDespachos();

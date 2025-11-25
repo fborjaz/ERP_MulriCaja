@@ -347,8 +347,9 @@ export const ProductosView = {
         producto.codigo !==
           this.productos.find((p) => p.id === this.editandoId)?.codigo
       ) {
+        // Usar tabla producto (singular) con columnas IMAXPOS
         const codigoExiste = await api.dbQuery(
-          "SELECT id FROM productos WHERE codigo = ? AND activo = 1",
+          "SELECT producto_id FROM producto WHERE producto_codigo_interno = ? AND producto_estatus = 1",
           [producto.codigo]
         );
 
@@ -368,43 +369,48 @@ export const ProductosView = {
       // ===== GUARDAR EN BASE DE DATOS =====
 
       if (this.editandoId) {
-        // Actualizar producto existente
+        // Actualizar producto existente (tabla producto según esquema IMAXPOS)
         await api.dbQuery(
-          `UPDATE productos 
-           SET codigo = ?, nombre = ?, categoria_id = ?, precio_costo = ?, 
-               precio_venta = ?, stock_actual = ?, stock_minimo = ?, descripcion = ? 
-           WHERE id = ?`,
+          `UPDATE producto 
+           SET producto_codigo_interno = ?, producto_nombre = ?, 
+               producto_estatus = 1
+           WHERE producto_id = ?`,
           [
             producto.codigo,
             producto.nombre,
-            producto.categoria_id,
-            producto.precio_costo,
-            producto.precio_venta,
-            producto.stock_actual,
-            producto.stock_minimo,
-            producto.descripcion,
             producto.id,
           ]
         );
+        
+        // Actualizar stock en producto_almacen
+        await api.dbQuery(
+          `INSERT OR REPLACE INTO producto_almacen (id_local, id_producto, cantidad)
+           VALUES (1, ?, ?)`,
+          [producto.id, producto.stock_actual || 0]
+        );
         toast.success("Producto actualizado correctamente");
       } else {
-        // Crear nuevo producto
-        await api.dbQuery(
-          `INSERT INTO productos 
-           (codigo, nombre, categoria_id, precio_costo, precio_venta, 
-            stock_actual, stock_minimo, descripcion, activo) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+        // Crear nuevo producto (tabla producto según esquema IMAXPOS)
+        const result = await api.dbQuery(
+          `INSERT INTO producto 
+           (producto_codigo_interno, producto_nombre, producto_estatus) 
+           VALUES (?, ?, 1)`,
           [
             producto.codigo,
             producto.nombre,
-            producto.categoria_id,
-            producto.precio_costo,
-            producto.precio_venta,
-            producto.stock_actual,
-            producto.stock_minimo,
-            producto.descripcion,
           ]
         );
+        
+        const productoId = result.lastInsertRowid;
+        
+        // Insertar stock en producto_almacen
+        if (productoId && producto.stock_actual) {
+          await api.dbQuery(
+            `INSERT INTO producto_almacen (id_local, id_producto, cantidad)
+             VALUES (1, ?, ?)`,
+            [productoId, producto.stock_actual]
+          );
+        }
         toast.success("Producto creado correctamente");
       }
 
@@ -423,7 +429,8 @@ export const ProductosView = {
     )
       return;
     try {
-      await api.dbQuery("UPDATE productos SET activo = 0 WHERE id = ?", [id]);
+      // Usar tabla producto (singular) según esquema IMAXPOS
+      await api.dbQuery("UPDATE producto SET producto_estatus = 0 WHERE producto_id = ?", [id]);
       toast.success("Producto eliminado correctamente");
       await this.cargarProductos();
     } catch (error) {

@@ -390,19 +390,20 @@ export const ClientesView = {
         );
         toast.success("Cliente actualizado correctamente");
       } else {
-        // Crear nuevo cliente
+        // Crear nuevo cliente (tabla cliente según esquema IMAXPOS)
         await api.dbQuery(
-          `INSERT INTO clientes 
-           (nombre, apellido, cedula, rnc, telefono, email, direccion, activo) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+          `INSERT INTO cliente 
+           (nombre_comercial, razon_social, identificacion, ruc, telefono1, email, direccion, cliente_status, codigo) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,
           [
-            cliente.nombre,
-            cliente.apellido,
-            cliente.cedula,
-            cliente.rnc,
-            cliente.telefono,
-            cliente.email,
-            cliente.direccion,
+            cliente.nombre || cliente.nombre_comercial || '',
+            cliente.razon_social || cliente.nombre || '',
+            cliente.cedula || cliente.identificacion || '',
+            cliente.rnc || cliente.ruc || '',
+            cliente.telefono || cliente.telefono1 || '',
+            cliente.email || '',
+            cliente.direccion || '',
+            cliente.codigo || cliente.identificacion || '',
           ]
         );
         toast.success("Cliente creado correctamente");

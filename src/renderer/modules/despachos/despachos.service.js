@@ -111,8 +111,9 @@ export class DespachosService {
       [observacionesEntrega, despachoId]
     );
 
+    // Usar tabla venta (singular) según esquema IMAXPOS
     const despacho = await api.dbQuery(
-      "SELECT venta_id FROM despachos WHERE id = ?",
+      "SELECT venta_id FROM venta WHERE venta_id = ? AND delivery = 1",
       [despachoId]
     );
     if (despacho.length > 0) {

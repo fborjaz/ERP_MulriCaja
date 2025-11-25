@@ -12,14 +12,13 @@ export class FerreteriaPlugin {
    */
   async productosConstruccion() {
     try {
+      // Usar tabla producto (singular) según esquema IMAXPOS
       return await api.dbQuery(
-        `SELECT p.*, c.nombre as categoria_nombre 
-         FROM productos p
-         JOIN categorias c ON c.id = p.categoria_id
-         WHERE c.tipo_negocio = 'Ferreteria'
-         AND (c.nombre LIKE '%Construcción%' OR c.nombre LIKE '%Material%')
-         AND p.activo = 1
-         ORDER BY p.nombre`
+        `SELECT p.*, c.nombre_categoria as categoria_nombre 
+         FROM producto p
+         LEFT JOIN categoria c ON c.id_categoria = p.produto_grupo
+         WHERE p.producto_estatus = 1
+         ORDER BY p.producto_nombre`
       );
     } catch (error) {
       console.error("Error obteniendo productos de construcción:", error);
@@ -33,12 +32,12 @@ export class FerreteriaPlugin {
    */
   async herramientasElectricas() {
     try {
+      // Usar tabla producto (singular) según esquema IMAXPOS
       return await api.dbQuery(
-        `SELECT p.* FROM productos p
-         JOIN categorias c ON c.id = p.categoria_id
-         WHERE c.codigo = 'FERR-002'
-         AND p.activo = 1
-         ORDER BY p.nombre`
+        `SELECT p.* FROM producto p
+         LEFT JOIN categoria c ON c.id_categoria = p.produto_grupo
+         WHERE p.producto_estatus = 1
+         ORDER BY p.producto_nombre`
       );
     } catch (error) {
       console.error("Error obteniendo herramientas eléctricas:", error);
@@ -53,22 +52,21 @@ export class FerreteriaPlugin {
    */
   async analizarRotacion(dias = 30) {
     try {
+      // Usar tablas producto, detalle_venta y venta según esquema IMAXPOS
       return await api.dbQuery(
         `SELECT 
-          p.id,
-          p.nombre,
-          p.codigo,
-          SUM(vd.cantidad) as unidades_vendidas,
-          COUNT(DISTINCT v.id) as veces_vendido,
-          AVG(vd.precio_unitario) as precio_promedio
-         FROM productos p
-         LEFT JOIN ventas_detalle vd ON vd.producto_id = p.id
-         LEFT JOIN ventas v ON v.id = vd.venta_id
-         JOIN categorias c ON c.id = p.categoria_id
-         WHERE c.tipo_negocio = 'Ferreteria'
-         AND v.fecha >= datetime('now', '-' || ? || ' days')
-         AND p.activo = 1
-         GROUP BY p.id
+          p.producto_id as id,
+          p.producto_nombre as nombre,
+          p.producto_codigo_interno as codigo,
+          SUM(dv.cantidad) as unidades_vendidas,
+          COUNT(DISTINCT v.venta_id) as veces_vendido,
+          AVG(dv.precio) as precio_promedio
+         FROM producto p
+         LEFT JOIN detalle_venta dv ON dv.id_producto = p.producto_id
+         LEFT JOIN venta v ON v.venta_id = dv.id_venta
+         WHERE v.fecha >= datetime('now', '-' || ? || ' days')
+         AND p.producto_estatus = 1
+         GROUP BY p.producto_id
          ORDER BY unidades_vendidas DESC`,
         [dias]
       );
@@ -95,19 +93,18 @@ export class FerreteriaPlugin {
    */
   async productosBajaRotacion(dias = 90) {
     try {
+      // Usar tabla producto (singular) según esquema IMAXPOS
       return await api.dbQuery(
         `SELECT p.* 
-         FROM productos p
-         JOIN categorias c ON c.id = p.categoria_id
-         WHERE c.tipo_negocio = 'Ferreteria'
-         AND p.activo = 1
-         AND p.id NOT IN (
-           SELECT DISTINCT vd.producto_id
-           FROM ventas_detalle vd
-           JOIN ventas v ON v.id = vd.venta_id
+         FROM producto p
+         WHERE p.producto_estatus = 1
+         AND p.producto_id NOT IN (
+           SELECT DISTINCT dv.id_producto
+           FROM detalle_venta dv
+           JOIN venta v ON v.venta_id = dv.id_venta
            WHERE v.fecha >= datetime('now', '-' || ? || ' days')
          )
-         ORDER BY p.nombre`,
+         ORDER BY p.producto_nombre`,
         [dias]
       );
     } catch (error) {

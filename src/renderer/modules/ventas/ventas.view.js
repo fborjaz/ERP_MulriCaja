@@ -397,11 +397,10 @@ export const VentasView = {
         }
       }
 
-      // 6. Validar sesión de usuario y caja
+      // 6. Validar sesión de usuario
       const user = authService.getCurrentUser();
-      const caja = authService.getCurrentCaja();
 
-      if (!user || !caja) {
+      if (!user) {
         toast.error("Error de sesión. Por favor inicie sesión nuevamente.");
         return;
       }
@@ -427,7 +426,7 @@ export const VentasView = {
       // ===== PROCESAR VENTA =====
 
       const ventaData = {
-        caja_id: caja.id,
+        caja_id: null, // Ya no se usa caja
         usuario_id: user.id,
         cliente_id: this.clienteSeleccionado?.id || 1, // Default a cliente 'Contado'
         items: this.carrito,

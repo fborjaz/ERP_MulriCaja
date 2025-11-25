@@ -39,23 +39,47 @@ export class ImportService {
             }
           }
 
-          // Insertar producto
-          await api.dbQuery(
-            `INSERT INTO productos 
-             (codigo, nombre, descripcion, categoria_id, precio_costo, precio_venta, stock_actual, stock_minimo, aplica_itbis)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          // Insertar producto (tabla producto según esquema IMAXPOS)
+          const productoResult = await api.dbQuery(
+            `INSERT INTO producto 
+             (producto_codigo_interno, producto_nombre, producto_descripcion, producto_estatus, producto_stockminimo)
+             VALUES (?, ?, ?, 1, ?)`,
             [
               row.codigo,
               row.nombre,
               row.descripcion || "",
-              categoriaId,
-              parseFloat(row.precio_costo || 0),
-              parseFloat(row.precio_venta),
-              parseFloat(row.stock_actual || 0),
               parseFloat(row.stock_minimo || 5),
-              row.aplica_itbis !== "false" ? 1 : 0,
             ]
           );
+          
+          const productoId = productoResult.lastInsertRowid;
+          
+          // Insertar precio en unidades_has_precio
+          if (row.precio_venta) {
+            await api.dbQuery(
+              `INSERT INTO unidades_has_precio (id_precio, id_unidad, id_producto, precio)
+               VALUES (1, 1, ?, ?)`,
+              [productoId, parseFloat(row.precio_venta)]
+            );
+          }
+          
+          // Insertar costo en producto_costo_unitario
+          if (row.precio_costo) {
+            await api.dbQuery(
+              `INSERT INTO producto_costo_unitario (producto_id, moneda_id, costo)
+               VALUES (?, 1, ?)`,
+              [productoId, parseFloat(row.precio_costo || 0)]
+            );
+          }
+          
+          // Insertar stock en producto_almacen
+          if (row.stock_actual) {
+            await api.dbQuery(
+              `INSERT INTO producto_almacen (id_local, id_producto, cantidad)
+               VALUES (1, ?, ?)`,
+              [productoId, parseFloat(row.stock_actual || 0)]
+            );
+          }
 
           importados++;
         } catch (error) {
@@ -99,20 +123,21 @@ export class ImportService {
 
           const codigo = `CLI-${Date.now()}-${importados}`;
 
+          // Insertar cliente (tabla cliente según esquema IMAXPOS)
           await api.dbQuery(
-            `INSERT INTO clientes 
-             (codigo, tipo_cliente, cedula, rnc, nombre, apellido, telefono, email, direccion)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO cliente 
+             (codigo, tipo_cliente, identificacion, ruc, nombre_comercial, razon_social, telefono1, email, direccion, cliente_status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
             [
               codigo,
               row.tipo_cliente || "Persona Fisica",
-              row.cedula || null,
-              row.rnc || null,
-              row.nombre,
-              row.apellido || "",
-              row.telefono || "",
-              row.email || "",
-              row.direccion || "",
+              row.cedula || row.identificacion || null,
+              row.rnc || row.ruc || null,
+              row.nombre || row.nombre_comercial || '',
+              row.razon_social || row.nombre || '',
+              row.telefono || row.telefono1 || '',
+              row.email || '',
+              row.direccion || '',
             ]
           );
 

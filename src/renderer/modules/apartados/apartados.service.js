@@ -12,16 +12,20 @@ export class ApartadosService {
   async crearApartado(clienteId, productos, fechaLimite, observaciones) {
     try {
       for (const producto of productos) {
-        const prod = await api.dbQuery(
-          "SELECT stock_actual FROM productos WHERE id = ?",
+        // Obtener stock desde producto_almacen
+        const stock = await api.dbQuery(
+          `SELECT COALESCE(pa.cantidad, 0) as stock_actual 
+           FROM producto p
+           LEFT JOIN producto_almacen pa ON pa.id_producto = p.producto_id AND pa.id_local = 1
+           WHERE p.producto_id = ?`,
           [producto.producto_id]
         );
 
-        if (prod.length === 0) {
+        if (stock.length === 0) {
           throw new Error(`Producto ${producto.producto_id} no encontrado`);
         }
 
-        const stockDisponible = prod[0].stock_actual;
+        const stockDisponible = parseFloat(stock[0].stock_actual);
         const stockApartado = await this.getStockApartado(producto.producto_id);
         const stockReal = stockDisponible - stockApartado;
 
@@ -44,12 +48,23 @@ export class ApartadosService {
 
       let total = 0;
       for (const producto of productos) {
-        const prod = await api.dbQuery(
-          "SELECT precio_venta FROM productos WHERE id = ?",
+        // Obtener precio desde unidades_has_precio o producto_costo_unitario
+        const precioQuery = await api.dbQuery(
+          `SELECT precio FROM unidades_has_precio 
+           WHERE id_producto = ? AND id_precio = 1 LIMIT 1`,
           [producto.producto_id]
         );
-
-        const precio = parseFloat(prod[0].precio_venta);
+        
+        let precio = parseFloat(precioQuery[0]?.precio || 0);
+        if (precio === 0) {
+          const costoQuery = await api.dbQuery(
+            `SELECT costo FROM producto_costo_unitario 
+             WHERE producto_id = ? AND moneda_id = 1 LIMIT 1`,
+            [producto.producto_id]
+          );
+          precio = parseFloat(costoQuery[0]?.costo || 0);
+        }
+        
         const subtotal = precio * producto.cantidad;
         total += subtotal;
 
@@ -66,12 +81,8 @@ export class ApartadosService {
           ]
         );
 
-        await api.dbQuery(
-          `UPDATE productos 
-           SET stock_apartado = COALESCE(stock_apartado, 0) + ? 
-           WHERE id = ?`,
-          [producto.cantidad, producto.producto_id]
-        );
+        // Nota: En IMAXPOS no hay campo stock_apartado, se maneja en apartados_detalle
+        // El stock disponible se calcula restando los apartados activos
       }
 
       await api.dbQuery("UPDATE apartados SET total = ? WHERE id = ?", [
@@ -137,48 +148,58 @@ export class ApartadosService {
       const total = subtotal + itbis;
       const cambio = efectivoRecibido - total;
 
+      // Usar tabla venta (singular) según esquema IMAXPOS
       const ventaResult = await api.dbQuery(
-        `INSERT INTO ventas 
-         (numero_factura, caja_id, usuario_id, cliente_id, subtotal, itbis, total, 
-          metodo_pago, efectivo_recibido, cambio, estado, origen_apartado)
-         VALUES (?, 1, 1, ?, ?, ?, ?, ?, ?, ?, 'Completada', ?)`,
+        `INSERT INTO venta 
+         (local_id, id_documento, venta_status, id_cliente, id_vendedor,
+          subtotal, total_impuesto, descuento, total, pagado, vuelto, fecha,
+          NumeroOrdenCompra, FechaEntrega, FechaOrdenCompra, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, CURRENT_DATE, CURRENT_TIMESTAMP)`,
         [
-          numeroFactura,
+          1, // local_id
+          1, // id_documento
+          'Completada', // venta_status
           apartado[0].cliente_id,
+          1, // id_vendedor
           subtotal,
           itbis,
+          0, // descuento
           total,
-          metodoPago,
           efectivoRecibido,
           cambio,
-          apartadoId,
+          numeroFactura, // NumeroOrdenCompra
+          new Date().toISOString().split('T')[0], // FechaEntrega
         ]
       );
 
       const ventaId = ventaResult.lastInsertRowid;
 
       for (const producto of productos) {
+        // Usar tabla detalle_venta según esquema IMAXPOS
         await api.dbQuery(
-          `INSERT INTO ventas_detalle 
-           (venta_id, producto_id, cantidad, precio_unitario, subtotal, itbis, total)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO detalle_venta 
+           (id_venta, id_producto, cantidad, precio, precio_venta, descuento, impuesto_porciento, impuesto_total, subtotal, total)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             ventaId,
             producto.producto_id,
             producto.cantidad,
             producto.precio_unitario,
-            producto.subtotal,
+            producto.precio_unitario,
+            0, // descuento
+            18, // impuesto_porciento
             producto.subtotal * 0.18,
+            producto.subtotal,
             producto.subtotal * 1.18,
           ]
         );
 
+        // Actualizar stock en producto_almacen
         await api.dbQuery(
-          `UPDATE productos 
-           SET stock_actual = stock_actual - ?,
-               stock_apartado = COALESCE(stock_apartado, 0) - ?
-           WHERE id = ?`,
-          [producto.cantidad, producto.cantidad, producto.producto_id]
+          `UPDATE producto_almacen 
+           SET cantidad = cantidad - ? 
+           WHERE id_producto = ? AND id_local = 1`,
+          [producto.cantidad, producto.producto_id]
         );
       }
 
@@ -219,14 +240,9 @@ export class ApartadosService {
         [apartadoId]
       );
 
-      for (const producto of productos) {
-        await api.dbQuery(
-          `UPDATE productos 
-           SET stock_apartado = COALESCE(stock_apartado, 0) - ?
-           WHERE id = ?`,
-          [producto.cantidad, producto.producto_id]
-        );
-      }
+      // Nota: En IMAXPOS el stock apartado se maneja en apartados_detalle
+      // Al cancelar, simplemente se marca el apartado como cancelado
+      // El stock disponible se recalcula automáticamente
 
       await api.dbQuery(
         'UPDATE apartados SET estado = "Cancelado", motivo_cancelacion = ? WHERE id = ?',

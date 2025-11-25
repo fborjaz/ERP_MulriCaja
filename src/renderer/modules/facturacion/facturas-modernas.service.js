@@ -22,9 +22,10 @@ export class FacturasModernasService {
       const factura = venta[0];
 
       let cliente = null;
+      // Usar tabla cliente (singular) según esquema IMAXPOS
       if (factura.cliente_id) {
         const clientes = await api.dbQuery(
-          "SELECT * FROM clientes WHERE id = ?",
+          "SELECT * FROM cliente WHERE id_cliente = ?",
           [factura.cliente_id]
         );
         cliente = clientes[0] || null;

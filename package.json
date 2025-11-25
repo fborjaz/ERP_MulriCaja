@@ -26,6 +26,7 @@
   "author": "ERP Multicajas RD",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^12.4.6",
     "electron-store": "^8.2.0",
@@ -82,7 +83,8 @@
         "from": "database",
         "to": "database",
         "filter": [
-          "**/*.sql"
+          "**/*.sql",
+          "**/sync/*.js"
         ]
       }
     ],

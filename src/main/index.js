@@ -14,6 +14,20 @@ const { registerBackupHandlers } = require("./ipc/backup");
 const { registerConfigHandlers } = require("./ipc/config");
 const { registerExportHandlers } = require("./ipc/export");
 
+// Importar handlers de sincronización con manejo de errores
+let registerSyncHandlers;
+try {
+  const syncModule = require("./ipc/sync");
+  registerSyncHandlers = syncModule.registerSyncHandlers;
+  console.log('✅ Módulo de sincronización cargado correctamente');
+} catch (error) {
+  console.error('❌ Error cargando módulo de sincronización:', error);
+  // Crear función dummy para evitar errores
+  registerSyncHandlers = () => {
+    console.warn('⚠️ Handlers de sincronización no disponibles');
+  };
+}
+
 // Inicializar store
 const store = new Store();
 
@@ -99,6 +113,14 @@ app.whenReady().then(() => {
   registerBackupHandlers(db, setDb);
   registerConfigHandlers(store);
   registerExportHandlers();
+  
+  // Registrar handlers de sincronización
+  try {
+    registerSyncHandlers(db);
+    console.log('✅ Handlers de sincronización registrados exitosamente');
+  } catch (error) {
+    console.error('❌ Error registrando handlers de sincronización:', error);
+  }
 
   // Crear ventana
   createWindow();

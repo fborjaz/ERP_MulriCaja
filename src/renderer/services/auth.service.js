@@ -20,10 +20,9 @@ export class AuthService {
    * Realiza el login de un usuario
    * @param {string} username - Nombre de usuario
    * @param {string} password - Contraseña
-   * @param {number} cajaId - ID de la caja
    * @returns {Promise<Object>} Resultado del login
    */
-  async login(username, password, cajaId) {
+  async login(username, password) {
     try {
       // Verificar si el usuario está bloqueado por intentos fallidos
       const blockStatus = this.checkLoginBlock(username);
@@ -39,9 +38,9 @@ export class AuthService {
         throw new Error("Usuario y contraseña son requeridos");
       }
 
-      // Buscar usuario en la base de datos
+      // Buscar usuario en la base de datos (estructura de hostinger)
       const users = await api.dbQuery(
-        "SELECT * FROM usuarios WHERE username = ? AND activo = 1",
+        "SELECT * FROM usuario WHERE username = ? AND activo = 1 AND deleted = 0",
         [username]
       );
 
@@ -52,8 +51,18 @@ export class AuthService {
 
       const user = users[0];
 
-      // Verificar contraseña usando bcrypt
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      // Verificar contraseña (en hostinger puede estar en MD5 o sin hash)
+      // Intentar comparación directa primero (MD5), luego bcrypt
+      let isValidPassword = false;
+      if (user.password === password || user.password.length === 32) {
+        // MD5 hash o contraseña sin hash
+        const { md5 } = await import('../utils/md5.js');
+        const md5Hash = md5(password);
+        isValidPassword = user.password === md5Hash || user.password === password;
+      } else {
+        // Intentar bcrypt
+        isValidPassword = await bcrypt.compare(password, user.password);
+      }
 
       if (!isValidPassword) {
         this.recordFailedAttempt(username);
@@ -72,25 +81,40 @@ export class AuthService {
         }
       }
 
-      // Obtener caja
-      const cajas = await api.dbQuery("SELECT * FROM cajas WHERE id = ?", [
-        cajaId,
-      ]);
-      if (cajas.length === 0) {
-        throw new Error("Caja no encontrada");
-      }
-
       // Login exitoso - limpiar intentos fallidos
       this.clearLoginAttempts(username);
 
-      this.currentUser = user;
-      this.currentCaja = cajas[0];
+      // Normalizar el objeto usuario para compatibilidad con el resto de la aplicación
+      const normalizedUser = {
+        id: user.nUsuCodigo,
+        nUsuCodigo: user.nUsuCodigo,
+        id_usuario: user.nUsuCodigo, // Alias para compatibilidad
+        nombre: user.nombre || user.username,
+        username: user.username,
+        email: user.email || null,
+        phone: user.phone || null,
+        grupo: user.grupo || null,
+        id_local: user.id_local || null,
+        activo: user.activo === 1,
+        deleted: user.deleted === 1,
+        identificacion: user.identificacion || null,
+        esSuper: user.esSuper === 1,
+        porcentaje_comision: user.porcentaje_comision || 0,
+        rol: user.esSuper === 1 ? "Administrador" : (user.grupo === 1 ? "Administrador" : "Usuario"),
+        // Campos adicionales para compatibilidad
+        usuario_nombre: user.nombre || user.username,
+        usuario_usuario: user.username,
+        usuario_status: user.activo,
+      };
+
+      this.currentUser = normalizedUser;
+      this.currentCaja = null; // Ya no se usa caja
 
       // Guardar en localStorage
-      localStorage.setItem("currentUser", JSON.stringify(user));
-      localStorage.setItem("currentCaja", JSON.stringify(cajas[0]));
+      localStorage.setItem("currentUser", JSON.stringify(normalizedUser));
+      localStorage.removeItem("currentCaja"); // Eliminar caja del localStorage
 
-      return { success: true, user, caja: cajas[0] };
+      return { success: true, user: normalizedUser };
     } catch (error) {
       console.error("Error en login:", error);
       throw error;

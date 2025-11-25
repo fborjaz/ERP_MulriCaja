@@ -15,6 +15,20 @@ import { registerBackupHandlers } from "./ipc/backup.js";
 import { registerConfigHandlers } from "./ipc/config.js";
 import { registerExportHandlers } from "./ipc/export.js";
 
+// Importar handlers de sincronización
+let registerSyncHandlers;
+try {
+  const syncModule = await import("./ipc/sync.js");
+  registerSyncHandlers = syncModule.registerSyncHandlers;
+  console.log('✅ Módulo de sincronización cargado correctamente');
+} catch (error) {
+  console.error('❌ Error cargando módulo de sincronización:', error);
+  // Crear función dummy para evitar errores
+  registerSyncHandlers = () => {
+    console.warn('⚠️ Handlers de sincronización no disponibles');
+  };
+}
+
 // Obtener __dirname en ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -105,6 +119,14 @@ app.whenReady().then(async () => {
   registerBackupHandlers(db, setDb);
   registerConfigHandlers(store);
   registerExportHandlers();
+  
+  // Registrar handlers de sincronización
+  try {
+    await registerSyncHandlers(db);
+    console.log('✅ Handlers de sincronización registrados exitosamente');
+  } catch (error) {
+    console.error('❌ Error registrando handlers de sincronización:', error);
+  }
 
   // Crear ventana
   createWindow();

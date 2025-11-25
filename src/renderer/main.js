@@ -61,6 +61,7 @@ import { CotizacionesView } from "./modules/cotizaciones/cotizaciones.view.js";
 import { ContabilidadView } from "./modules/contabilidad/contabilidad.view.js";
 import { NotasCreditoView } from "./modules/notas-credito/notas-credito.view.js";
 import { ConfiguracionView } from "./modules/configuracion/configuracion.view.js";
+import { SyncView } from "./modules/sync/sync.view.js";
 
 // Registrar Rutas
 router.register("dashboard", DashboardView);
@@ -76,6 +77,7 @@ router.register("cotizaciones", CotizacionesView);
 router.register("contabilidad", ContabilidadView);
 router.register("notas-credito", NotasCreditoView);
 router.register("configuracion", ConfiguracionView);
+router.register("sincronizacion", SyncView);
 
 // --- Lógica de Inicialización de UI ---
 
@@ -135,10 +137,10 @@ async function initialize() {
 async function checkSetupCompleted() {
   try {
     const result = await api.dbQuery(
-      "SELECT valor FROM configuracion WHERE clave = 'setup_completed'",
+      "SELECT config_value FROM configuraciones WHERE config_key = 'setup_completed'",
       []
     );
-    return result.length > 0 && result[0].valor === "true";
+    return result.length > 0 && result[0].config_value === "true";
   } catch (error) {
     console.error("Error verificando setup:", error);
     // Si hay error, asumir que no está completado

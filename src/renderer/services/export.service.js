@@ -91,12 +91,13 @@ export class ExportService {
    */
   async exportarInventario(formato = "excel") {
     try {
+      // Usar tabla producto (singular) según esquema IMAXPOS
       const productos = await api.dbQuery(
-        `SELECT p.*, c.nombre as categoria
-         FROM productos p
-         JOIN categorias c ON c.id = p.categoria_id
-         WHERE p.activo = 1
-         ORDER BY p.nombre`
+        `SELECT p.*, c.nombre_categoria as categoria
+         FROM producto p
+         LEFT JOIN categoria c ON c.id_categoria = p.produto_grupo
+         WHERE p.producto_estatus = 1
+         ORDER BY p.producto_nombre`
       );
 
       const datos = {

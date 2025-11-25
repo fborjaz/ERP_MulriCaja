@@ -113,10 +113,11 @@ export class FacturacionElectronicaService {
       }
       const venta = ventas[0];
 
+      // Usar tabla cliente (singular) según esquema IMAXPOS
       let cliente = null;
       if (venta.cliente_id) {
         const clientes = await api.dbQuery(
-          "SELECT * FROM clientes WHERE id = ?",
+          "SELECT * FROM cliente WHERE id_cliente = ?",
           [venta.cliente_id]
         );
         cliente = clientes[0] || null;

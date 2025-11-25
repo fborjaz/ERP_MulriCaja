@@ -16,13 +16,14 @@ export class FarmaciaPlugin {
    */
   async verificarVencimientos(dias = 30) {
     try {
+      // Usar tabla producto (singular) según esquema IMAXPOS
       const productos = await api.dbQuery(
-        `SELECT * FROM productos 
-         WHERE tiene_vencimiento = 1 
-         AND fecha_vencimiento <= date('now', '+' || ? || ' days')
-         AND fecha_vencimiento >= date('now')
-         AND activo = 1
-         ORDER BY fecha_vencimiento`,
+        `SELECT * FROM producto 
+         WHERE producto_vencimiento IS NOT NULL
+         AND producto_vencimiento <= date('now', '+' || ? || ' days')
+         AND producto_vencimiento >= date('now')
+         AND producto_estatus = 1
+         ORDER BY producto_vencimiento`,
         [dias]
       );
       return productos;
@@ -38,12 +39,13 @@ export class FarmaciaPlugin {
    */
   async productosVencidos() {
     try {
+      // Usar tabla producto (singular) según esquema IMAXPOS
       return await api.dbQuery(
-        `SELECT * FROM productos 
-         WHERE tiene_vencimiento = 1 
-         AND fecha_vencimiento < date('now')
-         AND activo = 1
-         ORDER BY fecha_vencimiento`
+        `SELECT * FROM producto 
+         WHERE producto_vencimiento IS NOT NULL
+         AND producto_vencimiento < date('now')
+         AND producto_estatus = 1
+         ORDER BY producto_vencimiento`
       );
     } catch (error) {
       console.error("Error obteniendo productos vencidos:", error);

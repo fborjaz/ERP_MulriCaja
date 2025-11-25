@@ -42,29 +42,23 @@ export const App = {
    */
   loadUserInfo() {
     const userStr = localStorage.getItem("currentUser");
-    const cajaStr = localStorage.getItem("currentCaja");
 
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
         const userNameEl = document.getElementById("user-name");
         if (userNameEl) {
-          userNameEl.textContent = `${user.nombre} ${user.apellido}`;
+          // Usar nombre o username (estructura de hostinger)
+          const displayName = user.nombre || user.username || "Usuario";
+          userNameEl.textContent = displayName;
+        }
+        // Ocultar el elemento de caja ya que ya no se usa
+        const cajaNameEl = document.getElementById("caja-name");
+        if (cajaNameEl) {
+          cajaNameEl.style.display = "none";
         }
       } catch (error) {
         console.error("Error parseando usuario:", error);
-      }
-    }
-
-    if (cajaStr) {
-      try {
-        const caja = JSON.parse(cajaStr);
-        const cajaNameEl = document.getElementById("caja-name");
-        if (cajaNameEl) {
-          cajaNameEl.textContent = caja.nombre;
-        }
-      } catch (error) {
-        console.error("Error parseando caja:", error);
       }
     }
   },

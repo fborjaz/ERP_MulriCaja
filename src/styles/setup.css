@@ -1,12 +1,4 @@
 /**
- * Estilos para Setup Wizard (Configuración Inicial)
- */
-
-/* Setup Screen Container */
-.setup-screen {
-  position: fixed;
-  top: 0;
-/**
  * Estilos para el Setup Wizard - Diseño Moderno
  */
 
@@ -57,6 +49,84 @@
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+/* ===== PROGRESS INDICATOR ===== */
+.setup-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 2rem 1rem;
+  gap: 1rem;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #718096;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  border: 3px solid #e2e8f0;
+}
+
+.progress-step.active .step-number {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transform: scale(1.1);
+}
+
+.progress-step.completed .step-number {
+  background: #48bb78;
+  color: white;
+  border-color: #48bb78;
+}
+
+.step-label {
+  font-size: 0.85rem;
+  color: #718096;
+  font-weight: 600;
+  text-align: center;
+  max-width: 120px;
+}
+
+.progress-step.active .step-label {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.progress-step.completed .step-label {
+  color: #48bb78;
+}
+
+.progress-line {
+  flex: 1;
+  height: 3px;
+  background: #e2e8f0;
+  margin: 0 0.5rem;
+  position: relative;
+  top: -20px;
+  transition: all 0.3s ease;
+}
+
+.progress-line.completed {
+  background: #48bb78;
 }
 
 /* ===== HEADER ===== */
@@ -397,10 +467,106 @@ input.error {
 }
 
 .setup-footer p {
-  margin: 0;
+  margin: 0 0 0.5rem 0;
   color: #4a5568;
   font-size: 0.95rem;
   font-weight: 500;
+}
+
+.setup-footer .support-info {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #667eea;
+  font-size: 0.9rem;
+}
+
+.setup-footer .support-info .material-icons {
+  font-size: 1.2rem;
+}
+
+.setup-footer .support-info strong {
+  color: #764ba2;
+}
+
+/* ===== HIDDEN STEP ===== */
+.setup-step.hidden {
+  display: none;
+}
+
+.setup-step.active {
+  display: block;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== BUTTONS ===== */
+.setup-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.setup-actions .btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.9rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.setup-actions .btn-secondary {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.setup-actions .btn-secondary:hover {
+  background: #cbd5e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.setup-actions .btn-info {
+  background: #4299e1;
+  color: white;
+}
+
+.setup-actions .btn-info:hover {
+  background: #3182ce;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+}
+
+.setup-actions .btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.setup-actions .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
 /* ===== RESPONSIVE ===== */

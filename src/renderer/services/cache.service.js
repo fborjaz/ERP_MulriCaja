@@ -106,7 +106,7 @@ class CacheService {
 
     try {
       const usuarios = await api.dbQuery(
-        "SELECT id, username, nombre, apellido, rol FROM usuarios WHERE activo = 1 ORDER BY nombre"
+        "SELECT nUsuCodigo as id, username, nombre, grupo, activo FROM usuario WHERE activo = 1 AND deleted = 0 ORDER BY nombre"
       );
 
       this.cache.usuarios = usuarios;

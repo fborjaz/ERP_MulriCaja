@@ -32,11 +32,12 @@ export class VentasService {
    * @returns {Promise<Array>} Detalles
    */
   async getDetallesVenta(ventaId) {
+    // Usar tablas detalle_venta y producto según esquema IMAXPOS
     return await api.dbQuery(
-      `SELECT vd.*, p.nombre as producto_nombre
-       FROM ventas_detalle vd
-       JOIN productos p ON p.id = vd.producto_id
-       WHERE vd.venta_id = ?`,
+      `SELECT dv.*, p.producto_nombre
+       FROM detalle_venta dv
+       JOIN producto p ON p.producto_id = dv.id_producto
+       WHERE dv.id_venta = ?`,
       [ventaId]
     );
   }
@@ -60,18 +61,20 @@ export class VentasService {
     // Obtener detalles de la venta
     const detalles = await this.getDetallesVenta(ventaId);
 
-    // Devolver stock
+    // Devolver stock en producto_almacen
     for (const detalle of detalles) {
       await api.dbQuery(
-        "UPDATE productos SET stock_actual = stock_actual + ? WHERE id = ?",
-        [detalle.cantidad, detalle.producto_id]
+        `UPDATE producto_almacen 
+         SET cantidad = cantidad + ? 
+         WHERE id_producto = ? AND id_local = 1`,
+        [detalle.cantidad, detalle.id_producto]
       );
     }
 
-    // Marcar venta como anulada
+    // Marcar venta como anulada (usar tabla venta según esquema IMAXPOS)
     await api.dbQuery(
-      "UPDATE ventas SET estado = ?, motivo_anulacion = ? WHERE id = ?",
-      ["Anulada", motivo, ventaId]
+      "UPDATE venta SET venta_status = ? WHERE venta_id = ?",
+      ["Anulada", ventaId]
     );
   }
 
@@ -81,15 +84,16 @@ export class VentasService {
    * @returns {Promise<Object>} Estadísticas
    */
   async getEstadisticas(fecha) {
+    // Usar tabla venta (singular) según esquema IMAXPOS
     const stats = await api.dbQuery(
       `SELECT 
         COUNT(*) as total_ventas,
         COALESCE(SUM(subtotal), 0) as total_subtotal,
-        COALESCE(SUM(itbis), 0) as total_itbis,
+        COALESCE(SUM(total_impuesto), 0) as total_itbis,
         COALESCE(SUM(total), 0) as total_total,
         COALESCE(AVG(total), 0) as promedio_venta
-       FROM ventas
-       WHERE DATE(fecha) = ? AND estado = 'Completada'`,
+       FROM venta
+       WHERE DATE(fecha) = ? AND venta_status = 'Completada'`,
       [fecha]
     );
     return stats[0];
@@ -101,13 +105,14 @@ export class VentasService {
    * @returns {Promise<Array>} Productos más vendidos
    */
   async getProductosMasVendidos(limite = 10) {
+    // Usar tablas detalle_venta, producto y venta según esquema IMAXPOS
     return await api.dbQuery(
-      `SELECT p.nombre, SUM(vd.cantidad) as total_vendido, SUM(vd.total) as total_ingresos
-       FROM ventas_detalle vd
-       JOIN productos p ON p.id = vd.producto_id
-       JOIN ventas v ON v.id = vd.venta_id
-       WHERE v.fecha >= datetime('now', '-30 days') AND v.estado = 'Completada'
-       GROUP BY p.id
+      `SELECT p.producto_nombre as nombre, SUM(dv.cantidad) as total_vendido, SUM(dv.total) as total_ingresos
+       FROM detalle_venta dv
+       JOIN producto p ON p.producto_id = dv.id_producto
+       JOIN venta v ON v.venta_id = dv.id_venta
+       WHERE v.fecha >= datetime('now', '-30 days') AND v.venta_status = 'Completada'
+       GROUP BY p.producto_id
        ORDER BY total_vendido DESC
        LIMIT ?`,
       [limite]

@@ -12,7 +12,8 @@ export class CotizacionesService {
   async crearCotizacion(clienteId, productos, fechaVencimiento, observaciones) {
     try {
       for (const producto of productos) {
-        const prod = await api.dbQuery("SELECT * FROM productos WHERE id = ?", [
+        // Usar tabla producto (singular) según esquema IMAXPOS
+        const prod = await api.dbQuery("SELECT * FROM producto WHERE producto_id = ?", [
           producto.producto_id,
         ]);
 
@@ -33,12 +34,26 @@ export class CotizacionesService {
 
       let subtotal = 0;
       for (const producto of productos) {
+        // Obtener precio desde precios o producto_costo_unitario
         const prod = await api.dbQuery(
-          "SELECT precio_venta FROM productos WHERE id = ?",
+          `SELECT pcu.costo as precio_venta 
+           FROM producto p
+           LEFT JOIN producto_costo_unitario pcu ON pcu.producto_id = p.producto_id AND pcu.moneda_id = 1
+           WHERE p.producto_id = ?`,
           [producto.producto_id]
         );
 
-        const precio = parseFloat(prod[0].precio_venta);
+        // Si no hay precio, usar costo unitario del producto
+        let precio = parseFloat(prod[0]?.precio_venta || 0);
+        if (precio === 0) {
+          // Intentar obtener desde unidades_has_precio
+          const precioAlt = await api.dbQuery(
+            `SELECT precio FROM unidades_has_precio 
+             WHERE id_producto = ? AND id_precio = 1 LIMIT 1`,
+            [producto.producto_id]
+          );
+          precio = parseFloat(precioAlt[0]?.precio || 0);
+        }
         const descuento = parseFloat(producto.descuento || 0);
         const precioFinal = precio * (1 - descuento / 100);
         const itemSubtotal = precioFinal * producto.cantidad;
@@ -108,12 +123,16 @@ export class CotizacionesService {
       );
 
       for (const producto of productos) {
-        const prod = await api.dbQuery(
-          "SELECT stock_actual FROM productos WHERE id = ?",
+        // Obtener stock desde producto_almacen
+        const stock = await api.dbQuery(
+          `SELECT COALESCE(pa.cantidad, 0) as stock_actual 
+           FROM producto p
+           LEFT JOIN producto_almacen pa ON pa.id_producto = p.producto_id AND pa.id_local = 1
+           WHERE p.producto_id = ?`,
           [producto.producto_id]
         );
 
-        if (prod[0].stock_actual < producto.cantidad) {
+        if (stock.length === 0 || parseFloat(stock[0].stock_actual) < producto.cantidad) {
           throw new Error(
             `Stock insuficiente para producto ${producto.producto_id}`
           );
@@ -126,44 +145,57 @@ export class CotizacionesService {
       const total = cotizacion[0].total;
       const cambio = efectivoRecibido - total;
 
+      // Usar tabla venta (singular) según esquema IMAXPOS
       const ventaResult = await api.dbQuery(
-        `INSERT INTO ventas 
-         (numero_factura, caja_id, usuario_id, cliente_id, subtotal, itbis, total, 
-          metodo_pago, efectivo_recibido, cambio, estado, origen_cotizacion)
-         VALUES (?, 1, 1, ?, ?, ?, ?, ?, ?, ?, 'Completada', ?)`,
+        `INSERT INTO venta 
+         (local_id, id_documento, venta_status, id_cliente, id_vendedor,
+          subtotal, total_impuesto, descuento, total, pagado, vuelto, fecha,
+          NumeroOrdenCompra, FechaEntrega, FechaOrdenCompra, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, CURRENT_DATE, CURRENT_TIMESTAMP)`,
         [
-          numeroFactura,
+          1, // local_id
+          1, // id_documento
+          'Completada', // venta_status
           cotizacion[0].cliente_id,
+          1, // id_vendedor (usuario actual)
           subtotal,
           itbis,
+          0, // descuento
           total,
-          metodoPago,
           efectivoRecibido,
           cambio,
-          cotizacionId,
+          numeroFactura, // NumeroOrdenCompra
+          new Date().toISOString().split('T')[0], // FechaEntrega
         ]
       );
 
       const ventaId = ventaResult.lastInsertRowid;
 
       for (const producto of productos) {
+        // Usar tabla detalle_venta según esquema IMAXPOS
         await api.dbQuery(
-          `INSERT INTO ventas_detalle 
-           (venta_id, producto_id, cantidad, precio_unitario, subtotal, itbis, total)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO detalle_venta 
+           (id_venta, id_producto, cantidad, precio, precio_venta, descuento, impuesto_porciento, impuesto_total, subtotal, total)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             ventaId,
             producto.producto_id,
             producto.cantidad,
             producto.precio_unitario,
+            producto.precio_unitario,
+            0, // descuento
+            18, // impuesto_porciento
+            producto.subtotal * 0.18, // impuesto_total
             producto.subtotal,
-            producto.subtotal * 0.18,
             producto.subtotal * 1.18,
           ]
         );
 
+        // Actualizar stock en producto_almacen
         await api.dbQuery(
-          "UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?",
+          `UPDATE producto_almacen 
+           SET cantidad = cantidad - ? 
+           WHERE id_producto = ? AND id_local = 1`,
           [producto.cantidad, producto.producto_id]
         );
       }
