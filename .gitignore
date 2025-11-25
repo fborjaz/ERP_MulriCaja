@@ -29,10 +29,18 @@ Thumbs.db
 # Database files
 
 *.db # Ignora cualquier archivo de base de datos SQLite generado en el directorio del proyecto
+
+# Archivos sensibles y de pruebas
+Api_sync.php
 IMAXPOS_API_Sync.postman_collection.json
+Sync_model_corregido.php
+Sync_model.php
 diagnostico-api.js
 sync-config.json
+test-diagnostico.js
 test-sync-empresa42.js
+verificar-apikey.sql
+verificar-password.sql
 
 # Build artifacts (explicitly for common installer types if not covered by dist/)
 *.exe
