@@ -404,6 +404,7 @@ CREATE TABLE IF NOT EXISTS corte_caja (
 
 CREATE TABLE IF NOT EXISTS cliente (
   id_cliente INTEGER PRIMARY KEY AUTOINCREMENT,
+<<<<<<< HEAD
   identificacion VARCHAR(45),
   razon_social VARCHAR(255),
   nombre_comercial VARCHAR(255) NOT NULL,
@@ -443,6 +444,47 @@ CREATE TABLE IF NOT EXISTS cliente (
   tipo_pago INTEGER NOT NULL DEFAULT 1,
   cliente_status INTEGER DEFAULT 1,
   codigo VARCHAR(255) NOT NULL,
+=======
+  identificacion VARCHAR(50),
+  razon_social VARCHAR(255),
+  nombre_comercial VARCHAR(255),
+  grupo_id INTEGER,
+  email VARCHAR(100),
+  telefono1 VARCHAR(50),
+  direccion TEXT,
+  dni VARCHAR(50),
+  representante VARCHAR(255),
+  provincia VARCHAR(100),
+  ciudad VARCHAR(100),
+  distrito VARCHAR(100),
+  estado_id INTEGER,
+  ciudad_id INTEGER,
+  pagina_web VARCHAR(255),
+  telefono2 VARCHAR(50),
+  nota TEXT,
+  categoria_precio INTEGER,
+  tipo_cliente VARCHAR(50),
+  nombres VARCHAR(255),
+  apellido_materno VARCHAR(100),
+  apellido_paterno VARCHAR(100),
+  genero VARCHAR(1),
+  direccion_maps TEXT,
+  latitud REAL,
+  longitud REAL,
+  ruc VARCHAR(50),
+  representante_apellido_pat VARCHAR(100),
+  representante_apellido_mat VARCHAR(100),
+  representante_genero VARCHAR(1),
+  representante_nombre VARCHAR(255),
+  representante_dni VARCHAR(50),
+  descuento REAL,
+  agente_retension INTEGER DEFAULT 0,
+  agente_retension_valor REAL DEFAULT 0,
+  linea_credito REAL DEFAULT 0,
+  tipo_pago VARCHAR(50),
+  cliente_status INTEGER DEFAULT 1,
+  codigo VARCHAR(50),
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -545,9 +587,15 @@ CREATE TABLE IF NOT EXISTS producto (
   producto_modelo VARCHAR(100),
   producto_titulo_imagen VARCHAR(100),
   producto_descripcion_img TEXT,
+<<<<<<< HEAD
   producto_tipo VARCHAR(25) NOT NULL DEFAULT 'PRODUCTO',
   producto_venta INTEGER NOT NULL DEFAULT 1,
   formula INTEGER NOT NULL DEFAULT 0,
+=======
+  producto_tipo VARCHAR(25) DEFAULT 'PRODUCTO',
+  producto_venta INTEGER DEFAULT 1,
+  formula INTEGER DEFAULT 0,
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -721,7 +769,11 @@ CREATE TABLE IF NOT EXISTS venta (
   total_impuesto REAL,
   descuento REAL,
   descuento_general REAL,
+<<<<<<< HEAD
   tdescuento INTEGER NOT NULL DEFAULT 0,
+=======
+  tdescuento INTEGER DEFAULT 0,
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
   total REAL,
   pagado REAL DEFAULT 0.00,
   vuelto REAL DEFAULT 0.00,
@@ -734,6 +786,7 @@ CREATE TABLE IF NOT EXISTS venta (
   factura_impresa INTEGER DEFAULT 0,
   fecha DATETIME,
   fecha_facturacion DATETIME,
+<<<<<<< HEAD
   NumeroOrdenCompra VARCHAR(255) NOT NULL,
   FechaEntrega DATE NOT NULL,
   FechaOrdenCompra DATE NOT NULL,
@@ -745,6 +798,19 @@ CREATE TABLE IF NOT EXISTS venta (
   id_logueado INTEGER,
   cajero_id INTEGER NOT NULL DEFAULT 0,
   delivery INTEGER NOT NULL DEFAULT 0,
+=======
+  NumeroOrdenCompra VARCHAR(255),
+  FechaEntrega DATE,
+  FechaOrdenCompra DATE,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  dni_garante VARCHAR(100),
+  tipo_impuesto INTEGER,
+  nota TEXT,
+  venta_afectada INTEGER DEFAULT 0,
+  id_logueado INTEGER,
+  cajero_id INTEGER DEFAULT 0,
+  delivery INTEGER DEFAULT 0,
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
   FechaEmbarque DATE,
   NumeroEmbarque VARCHAR(50),
   NumeroContenedor VARCHAR(50),
@@ -756,7 +822,12 @@ CREATE TABLE IF NOT EXISTS venta (
   CantidadBulto REAL,
   UnidadBulto VARCHAR(10),
   VolumenBulto REAL,
+<<<<<<< HEAD
   UnidadVolumen VARCHAR(10)
+=======
+  UnidadVolumen VARCHAR(10),
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
 );
 
 CREATE TABLE IF NOT EXISTS detalle_venta (
@@ -1294,6 +1365,7 @@ INSERT OR IGNORE INTO moneda (id_moneda, nombre_moneda, simbolo_moneda, codigo_m
 -- =====================================================
 
 CREATE TABLE IF NOT EXISTS usuario (
+<<<<<<< HEAD
   nUsuCodigo INTEGER PRIMARY KEY AUTOINCREMENT,
   codigo VARCHAR(255) NOT NULL,
   username VARCHAR(18) NOT NULL,
@@ -1316,6 +1388,26 @@ CREATE TABLE IF NOT EXISTS usuario (
   rawId VARCHAR(255)
 );
 
+=======
+  id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_nombre VARCHAR(255) NOT NULL,
+  usuario_usuario VARCHAR(50) NOT NULL UNIQUE,
+  usuario_pass VARCHAR(255) NOT NULL,
+  usuario_grupo INTEGER,
+  usuario_email VARCHAR(100),
+  usuario_telefono VARCHAR(50),
+  usuario_direccion TEXT,
+  usuario_status INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  last_login DATETIME
+);
+
+-- Usuario administrador por defecto
+INSERT OR IGNORE INTO usuario (id_usuario, usuario_nombre, usuario_usuario, usuario_pass, usuario_grupo, usuario_status) VALUES
+(1, 'ADMINISTRADOR', 'admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 1);
+
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
 CREATE TABLE IF NOT EXISTS usuario_almacen (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   usuario_id INTEGER NOT NULL,

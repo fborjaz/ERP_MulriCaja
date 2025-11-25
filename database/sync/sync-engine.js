@@ -1,12 +1,21 @@
 /**
  * Motor de Sincronización Bidireccional
  * @module database/sync/sync-engine
+<<<<<<< HEAD
  *
  * Sincroniza datos entre SQLite local (offline) y MySQL remoto (IMAXPOS Cloud)
  */
 
 import axios from "axios";
 import Database from "better-sqlite3";
+=======
+ * 
+ * Sincroniza datos entre SQLite local (offline) y MySQL remoto (IMAXPOS Cloud)
+ */
+
+const axios = require('axios');
+const Database = require('better-sqlite3');
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
 
 class SyncEngine {
   constructor(db, config) {
@@ -14,6 +23,7 @@ class SyncEngine {
     this.config = config;
     this.syncInProgress = false;
     this.lastSyncTime = null;
+<<<<<<< HEAD
 
     // Tablas que NO se sincronizan (solo locales)
     this.excludedTables = [
@@ -22,10 +32,21 @@ class SyncEngine {
       "sync_conflicts",
       "sync_config",
       "ci_sessions",
+=======
+    
+    // Tablas que NO se sincronizan (solo locales)
+    this.excludedTables = [
+      'sync_metadata',
+      'sync_log',
+      'sync_conflicts',
+      'sync_config',
+      'ci_sessions'
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
     ];
 
     // Tablas prioritarias (se sincronizan primero)
     this.priorityTables = [
+<<<<<<< HEAD
       "local",
       "moneda",
       "usuario",
@@ -35,6 +56,17 @@ class SyncEngine {
       "producto",
       "cliente",
       "proveedor",
+=======
+      'local',
+      'moneda',
+      'usuario',
+      'caja',
+      'caja_desglose',
+      'banco',
+      'producto',
+      'cliente',
+      'proveedor'
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
     ];
 
     // Orden de sincronización por dependencias
@@ -46,6 +78,7 @@ class SyncEngine {
    */
   async syncFull() {
     if (this.syncInProgress) {
+<<<<<<< HEAD
       throw new Error("Sincronización ya en progreso");
     }
 
@@ -54,6 +87,16 @@ class SyncEngine {
 
     try {
       console.log("🔄 Iniciando sincronización completa...");
+=======
+      throw new Error('Sincronización ya en progreso');
+    }
+
+    this.syncInProgress = true;
+    const syncLogId = this._createSyncLog('full');
+
+    try {
+      console.log('🔄 Iniciando sincronización completa...');
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
 
       // 1. PULL: Obtener cambios del servidor
       await this.syncPull();
@@ -64,18 +107,33 @@ class SyncEngine {
       // 3. Actualizar metadata
       this._updateSyncMetadata();
 
+<<<<<<< HEAD
       console.log("✅ Sincronización completa exitosa");
       this._completeSyncLog(syncLogId, "success");
+=======
+      console.log('✅ Sincronización completa exitosa');
+      this._completeSyncLog(syncLogId, 'success');
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
 
       return {
         success: true,
         timestamp: new Date().toISOString(),
+<<<<<<< HEAD
         message: "Sincronización completada correctamente",
       };
     } catch (error) {
       console.error("❌ Error en sincronización:", error);
       this._completeSyncLog(syncLogId, "error", error.message);
 
+=======
+        message: 'Sincronización completada correctamente'
+      };
+
+    } catch (error) {
+      console.error('❌ Error en sincronización:', error);
+      this._completeSyncLog(syncLogId, 'error', error.message);
+      
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
       throw error;
     } finally {
       this.syncInProgress = false;
@@ -86,6 +144,7 @@ class SyncEngine {
    * PULL: Descargar cambios del servidor
    */
   async syncPull() {
+<<<<<<< HEAD
     console.log("⬇️ Descargando cambios del servidor...");
 
     const syncConfig = this._getSyncConfig();
@@ -130,11 +189,46 @@ class SyncEngine {
       for (const tableName of this.tableOrder) {
         const tableChanges = changes.filter((c) => c.table === tableName);
 
+=======
+    console.log('⬇️ Descargando cambios del servidor...');
+
+    const syncConfig = this._getSyncConfig();
+    if (!syncConfig || !syncConfig.api_url) {
+      throw new Error('Configuración de sincronización no encontrada');
+    }
+
+    try {
+      // Obtener lista de tablas modificadas desde último sync
+      const response = await axios.post(
+        `${syncConfig.api_url}/api/sync/changes`,
+        {
+          empresa_id: syncConfig.empresa_id,
+          last_sync: syncConfig.last_successful_sync || '1970-01-01 00:00:00'
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${syncConfig.auth_token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 60000 // 60 segundos
+        }
+      );
+
+      const { changes, metadata } = response.data;
+
+      console.log(`📊 Cambios recibidos: ${changes.length} operaciones`);
+
+      // Aplicar cambios en orden de prioridad
+      for (const tableName of this.tableOrder) {
+        const tableChanges = changes.filter(c => c.table === tableName);
+        
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
         if (tableChanges.length > 0) {
           await this._applyTableChanges(tableName, tableChanges);
         }
       }
 
+<<<<<<< HEAD
       // Aplicar cambios de tablas que no están en el orden de prioridad
       const processedTables = new Set(this.tableOrder);
       const remainingChanges = changes.filter(
@@ -169,6 +263,17 @@ class SyncEngine {
         throw new Error(
           "No se puede conectar al servidor. Verifique su conexión a internet."
         );
+=======
+      return {
+        success: true,
+        appliedChanges: changes.length,
+        metadata
+      };
+
+    } catch (error) {
+      if (error.code === 'ENOTFOUND' || error.code === 'ETIMEDOUT') {
+        throw new Error('No se puede conectar al servidor. Verifique su conexión a internet.');
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
       }
       throw error;
     }
@@ -178,11 +283,19 @@ class SyncEngine {
    * PUSH: Enviar cambios locales al servidor
    */
   async syncPush() {
+<<<<<<< HEAD
     console.log("⬆️ Enviando cambios al servidor...");
 
     const syncConfig = this._getSyncConfig();
     if (!syncConfig || !syncConfig.api_url) {
       throw new Error("Configuración de sincronización no encontrada");
+=======
+    console.log('⬆️ Enviando cambios al servidor...');
+
+    const syncConfig = this._getSyncConfig();
+    if (!syncConfig || !syncConfig.api_url) {
+      throw new Error('Configuración de sincronización no encontrada');
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
     }
 
     try {
@@ -190,12 +303,17 @@ class SyncEngine {
       const localChanges = this._getLocalChanges();
 
       if (localChanges.length === 0) {
+<<<<<<< HEAD
         console.log("ℹ️ No hay cambios locales para sincronizar");
+=======
+        console.log('ℹ️ No hay cambios locales para sincronizar');
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
         return { success: true, sentChanges: 0 };
       }
 
       console.log(`📤 Enviando ${localChanges.length} cambios...`);
 
+<<<<<<< HEAD
       // Enviar cambios al servidor usando el endpoint correcto
       const baseUrl = syncConfig.api_url.endsWith("/")
         ? syncConfig.api_url.slice(0, -1)
@@ -270,6 +388,44 @@ class SyncEngine {
         throw new Error(
           "No se puede conectar al servidor. Los cambios se sincronizarán cuando haya conexión."
         );
+=======
+      // Enviar cambios al servidor
+      const response = await axios.post(
+        `${syncConfig.api_url}/api/sync/apply`,
+        {
+          empresa_id: syncConfig.empresa_id,
+          changes: localChanges
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${syncConfig.auth_token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 120000 // 2 minutos
+        }
+      );
+
+      const { applied, conflicts } = response.data;
+
+      // Manejar conflictos si existen
+      if (conflicts && conflicts.length > 0) {
+        console.warn(`⚠️ Conflictos detectados: ${conflicts.length}`);
+        await this._handleConflicts(conflicts);
+      }
+
+      // Marcar cambios como sincronizados
+      this._markChangesSynced(applied);
+
+      return {
+        success: true,
+        sentChanges: applied.length,
+        conflicts: conflicts.length
+      };
+
+    } catch (error) {
+      if (error.code === 'ENOTFOUND' || error.code === 'ETIMEDOUT') {
+        throw new Error('No se puede conectar al servidor. Los cambios se sincronizarán cuando haya conexión.');
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
       }
       throw error;
     }
@@ -285,6 +441,7 @@ class SyncEngine {
       for (const change of changes) {
         try {
           switch (change.operation) {
+<<<<<<< HEAD
             case "insert":
               this._applyInsert(tableName, change.data);
               break;
@@ -292,11 +449,21 @@ class SyncEngine {
               this._applyUpdate(tableName, change.data, change.record_id);
               break;
             case "delete":
+=======
+            case 'insert':
+              this._applyInsert(tableName, change.data);
+              break;
+            case 'update':
+              this._applyUpdate(tableName, change.data, change.record_id);
+              break;
+            case 'delete':
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
               this._applyDelete(tableName, change.record_id);
               break;
           }
 
           // Registrar en log
+<<<<<<< HEAD
           this._logChange(
             tableName,
             change.operation,
@@ -312,6 +479,13 @@ class SyncEngine {
             "error",
             error.message
           );
+=======
+          this._logChange(tableName, change.operation, change.record_id, 'success');
+
+        } catch (error) {
+          console.error(`Error aplicando cambio en ${tableName}:`, error);
+          this._logChange(tableName, change.operation, change.record_id, 'error', error.message);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
         }
       }
     });
@@ -323,6 +497,7 @@ class SyncEngine {
    * Aplica INSERT
    */
   _applyInsert(tableName, data) {
+<<<<<<< HEAD
     const idField = this._getIdField(tableName);
     const columns = Object.keys(data);
     const placeholders = columns.map(() => "?").join(", ");
@@ -352,10 +527,24 @@ class SyncEngine {
         const insertSql = `INSERT INTO ${tableName} (${columns.join(", ")}) VALUES (${placeholders})`;
         this.db.prepare(insertSql).run(...values);
       }
+=======
+    const columns = Object.keys(data);
+    const placeholders = columns.map(() => '?').join(', ');
+    const values = Object.values(data);
+
+    const sql = `INSERT OR REPLACE INTO ${tableName} (${columns.join(', ')}) VALUES (${placeholders})`;
+    
+    try {
+      this.db.prepare(sql).run(...values);
+    } catch (error) {
+      // Si falla el INSERT, intentar UPDATE
+      this._applyUpdate(tableName, data, data.id);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
     }
   }
 
   /**
+<<<<<<< HEAD
    * Obtiene el nombre del campo ID para una tabla específica
    * Las tablas IMAXPOS tienen diferentes nombres de ID
    */
@@ -430,12 +619,24 @@ class SyncEngine {
       console.error(`Error actualizando ${tableName}:`, error);
       throw error;
     }
+=======
+   * Aplica UPDATE
+   */
+  _applyUpdate(tableName, data, recordId) {
+    const columns = Object.keys(data).filter(k => k !== 'id');
+    const setClause = columns.map(col => `${col} = ?`).join(', ');
+    const values = columns.map(col => data[col]);
+
+    const sql = `UPDATE ${tableName} SET ${setClause} WHERE id = ?`;
+    this.db.prepare(sql).run(...values, recordId);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
   }
 
   /**
    * Aplica DELETE
    */
   _applyDelete(tableName, recordId) {
+<<<<<<< HEAD
     const idField = this._getIdField(tableName);
     const sql = `DELETE FROM ${tableName} WHERE ${idField} = ?`;
     try {
@@ -444,6 +645,10 @@ class SyncEngine {
       console.error(`Error eliminando de ${tableName}:`, error);
       throw error;
     }
+=======
+    const sql = `DELETE FROM ${tableName} WHERE id = ?`;
+    this.db.prepare(sql).run(recordId);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
   }
 
   /**
@@ -458,7 +663,11 @@ class SyncEngine {
 
       // Obtener registros modificados desde último sync
       const lastSync = this._getLastSync(tableName);
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
       const sql = `
         SELECT * FROM ${tableName}
         WHERE updated_at > ?
@@ -469,6 +678,7 @@ class SyncEngine {
         const records = this.db.prepare(sql).all(lastSync, lastSync);
 
         for (const record of records) {
+<<<<<<< HEAD
           const idField = this._getIdField(tableName);
           const recordId = record[idField] || record.id;
           changes.push({
@@ -476,6 +686,13 @@ class SyncEngine {
             operation: recordId ? "update" : "insert",
             record_id: recordId,
             data: record,
+=======
+          changes.push({
+            table: tableName,
+            operation: record.id ? 'update' : 'insert',
+            record_id: record.id,
+            data: record
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
           });
         }
       } catch (error) {
@@ -491,6 +708,7 @@ class SyncEngine {
    * Maneja conflictos de sincronización
    */
   async _handleConflicts(conflicts) {
+<<<<<<< HEAD
     console.log("🔧 Manejando conflictos...");
 
     for (const conflict of conflicts) {
@@ -516,6 +734,25 @@ class SyncEngine {
         conflict.remote_data,
         conflict.record_id
       );
+=======
+    console.log('🔧 Manejando conflictos...');
+
+    for (const conflict of conflicts) {
+      // Guardar conflicto en BD para resolución posterior
+      this.db.prepare(`
+        INSERT INTO sync_conflicts (table_name, record_id, local_data, remote_data, resolution)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(
+        conflict.table,
+        conflict.record_id,
+        JSON.stringify(conflict.local_data),
+        JSON.stringify(conflict.remote_data),
+        'remote' // Por defecto, servidor gana
+      );
+
+      // Aplicar resolución automática (servidor gana)
+      this._applyUpdate(conflict.table, conflict.remote_data, conflict.record_id);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
     }
   }
 
@@ -523,9 +760,13 @@ class SyncEngine {
    * Obtiene configuración de sincronización
    */
   _getSyncConfig() {
+<<<<<<< HEAD
     const result = this.db
       .prepare("SELECT * FROM sync_config WHERE enabled = 1 LIMIT 1")
       .get();
+=======
+    const result = this.db.prepare('SELECT * FROM sync_config WHERE enabled = 1 LIMIT 1').get();
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
     return result;
   }
 
@@ -533,18 +774,28 @@ class SyncEngine {
    * Obtiene todas las tablas de la BD
    */
   _getAllTables() {
+<<<<<<< HEAD
     const tables = this.db
       .prepare(
         `
+=======
+    const tables = this.db.prepare(`
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
       SELECT name FROM sqlite_master 
       WHERE type='table' 
       AND name NOT LIKE 'sqlite_%'
       ORDER BY name
+<<<<<<< HEAD
     `
       )
       .all();
 
     return tables.map((t) => t.name);
+=======
+    `).all();
+
+    return tables.map(t => t.name);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
   }
 
   /**
@@ -555,10 +806,14 @@ class SyncEngine {
     // TODO: Implementar análisis de foreign keys para orden óptimo
     return [
       ...this.priorityTables,
+<<<<<<< HEAD
       ...this._getAllTables().filter(
         (t) =>
           !this.priorityTables.includes(t) && !this.excludedTables.includes(t)
       ),
+=======
+      ...this._getAllTables().filter(t => !this.priorityTables.includes(t) && !this.excludedTables.includes(t))
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
     ];
   }
 
@@ -566,6 +821,7 @@ class SyncEngine {
    * Obtiene timestamp de última sincronización de una tabla
    */
   _getLastSync(tableName) {
+<<<<<<< HEAD
     const result = this.db
       .prepare(
         `
@@ -575,6 +831,13 @@ class SyncEngine {
       .get(tableName);
 
     return result?.last_sync || "1970-01-01 00:00:00";
+=======
+    const result = this.db.prepare(`
+      SELECT last_sync FROM sync_metadata WHERE table_name = ?
+    `).get(tableName);
+
+    return result?.last_sync || '1970-01-01 00:00:00';
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
   }
 
   /**
@@ -584,6 +847,7 @@ class SyncEngine {
     const now = new Date().toISOString();
 
     // Actualizar configuración general
+<<<<<<< HEAD
     this.db
       .prepare(
         `
@@ -593,12 +857,20 @@ class SyncEngine {
     `
       )
       .run(now);
+=======
+    this.db.prepare(`
+      UPDATE sync_config 
+      SET last_successful_sync = ? 
+      WHERE enabled = 1
+    `).run(now);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
 
     // Actualizar metadata por tabla
     const tables = this._getAllTables();
     for (const tableName of tables) {
       if (this.excludedTables.includes(tableName)) continue;
 
+<<<<<<< HEAD
       const totalRecords = this.db
         .prepare(`SELECT COUNT(*) as count FROM ${tableName}`)
         .get().count;
@@ -606,6 +878,11 @@ class SyncEngine {
       this.db
         .prepare(
           `
+=======
+      const totalRecords = this.db.prepare(`SELECT COUNT(*) as count FROM ${tableName}`).get().count;
+
+      this.db.prepare(`
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
         INSERT INTO sync_metadata (table_name, last_sync, sync_status, total_records, synced_records)
         VALUES (?, ?, 'completed', ?, ?)
         ON CONFLICT(table_name) DO UPDATE SET
@@ -614,9 +891,13 @@ class SyncEngine {
           total_records = excluded.total_records,
           synced_records = excluded.synced_records,
           updated_at = CURRENT_TIMESTAMP
+<<<<<<< HEAD
       `
         )
         .run(tableName, now, totalRecords, totalRecords);
+=======
+      `).run(tableName, now, totalRecords, totalRecords);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
     }
   }
 
@@ -624,6 +905,7 @@ class SyncEngine {
    * Crea registro en log de sincronización
    */
   _createSyncLog(syncType) {
+<<<<<<< HEAD
     const result = this.db
       .prepare(
         `
@@ -632,6 +914,12 @@ class SyncEngine {
     `
       )
       .run(syncType);
+=======
+    const result = this.db.prepare(`
+      INSERT INTO sync_log (sync_type, status)
+      VALUES (?, 'in_progress')
+    `).run(syncType);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
 
     return result.lastInsertRowid;
   }
@@ -640,6 +928,7 @@ class SyncEngine {
    * Completa registro en log de sincronización
    */
   _completeSyncLog(logId, status, errorMessage = null) {
+<<<<<<< HEAD
     this.db
       .prepare(
         `
@@ -649,12 +938,20 @@ class SyncEngine {
     `
       )
       .run(status, errorMessage, logId);
+=======
+    this.db.prepare(`
+      UPDATE sync_log 
+      SET status = ?, error_message = ?, completed_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(status, errorMessage, logId);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
   }
 
   /**
    * Registra cambio individual en log
    */
   _logChange(tableName, operation, recordId, status, errorMessage = null) {
+<<<<<<< HEAD
     this.db
       .prepare(
         `
@@ -663,6 +960,12 @@ class SyncEngine {
     `
       )
       .run(tableName, operation, recordId, status, errorMessage);
+=======
+    this.db.prepare(`
+      INSERT INTO sync_log (sync_type, table_name, operation, record_id, status, error_message, completed_at)
+      VALUES ('auto', ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `).run(tableName, operation, recordId, status, errorMessage);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
   }
 
   /**
@@ -672,6 +975,7 @@ class SyncEngine {
     // Actualizar timestamps de registros sincronizados
     for (const change of appliedChanges) {
       try {
+<<<<<<< HEAD
         this.db
           .prepare(
             `
@@ -681,6 +985,13 @@ class SyncEngine {
         `
           )
           .run(change.record_id);
+=======
+        this.db.prepare(`
+          UPDATE ${change.table}
+          SET updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(change.record_id);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
       } catch (error) {
         // Tabla sin columna updated_at, ignorar
       }
@@ -693,6 +1004,7 @@ class SyncEngine {
   async checkConnection() {
     const syncConfig = this._getSyncConfig();
     if (!syncConfig || !syncConfig.api_url) {
+<<<<<<< HEAD
       return { connected: false, message: "No configurado" };
     }
 
@@ -714,6 +1026,33 @@ class SyncEngine {
         connected: false,
         message: "Sin conexión",
         error: error.message,
+=======
+      return { connected: false, message: 'No configurado' };
+    }
+
+    try {
+      const response = await axios.get(
+        `${syncConfig.api_url}/api/sync/ping`,
+        {
+          headers: {
+            'Authorization': `Bearer ${syncConfig.auth_token}`
+          },
+          timeout: 5000
+        }
+      );
+
+      return {
+        connected: true,
+        message: 'Conectado',
+        serverTime: response.data.timestamp
+      };
+
+    } catch (error) {
+      return {
+        connected: false,
+        message: 'Sin conexión',
+        error: error.message
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
       };
     }
   }
@@ -723,6 +1062,7 @@ class SyncEngine {
    */
   getSyncStats() {
     const config = this._getSyncConfig();
+<<<<<<< HEAD
 
     const pendingChanges = this._getLocalChanges().length;
 
@@ -743,15 +1083,38 @@ class SyncEngine {
     `
       )
       .get().last_sync;
+=======
+    
+    const pendingChanges = this._getLocalChanges().length;
+    
+    const conflicts = this.db.prepare(`
+      SELECT COUNT(*) as count FROM sync_conflicts WHERE resolved = 0
+    `).get().count;
+
+    const lastSync = this.db.prepare(`
+      SELECT MAX(completed_at) as last_sync 
+      FROM sync_log 
+      WHERE status = 'success'
+    `).get().last_sync;
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
 
     return {
       lastSync,
       pendingChanges,
       unresolvedConflicts: conflicts,
       autoSyncEnabled: config?.auto_sync === 1,
+<<<<<<< HEAD
       syncInterval: config?.sync_interval || 300,
+=======
+      syncInterval: config?.sync_interval || 300
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
     };
   }
 }
 
+<<<<<<< HEAD
 export default SyncEngine;
+=======
+module.exports = SyncEngine;
+
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809

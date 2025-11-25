@@ -4,6 +4,7 @@
  */
 
 const { ipcMain } = require('electron');
+<<<<<<< HEAD
 const path = require('path');
 
 // Intentar cargar SyncEngine desde diferentes ubicaciones posibles
@@ -20,12 +21,16 @@ try {
     throw new Error('No se pudo cargar SyncEngine. Verifique la ruta del módulo.');
   }
 }
+=======
+const SyncEngine = require('../../../database/sync/sync-engine');
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
 
 /**
  * Registra handlers IPC para sincronización
  * @param {Database} db - Instancia de la base de datos
  */
 function registerSyncHandlers(db) {
+<<<<<<< HEAD
   console.log('🔄 Registrando handlers de sincronización...');
   
   // SyncEngine requiere db y config, pero config puede ser null
@@ -39,13 +44,19 @@ function registerSyncHandlers(db) {
     // Continuar sin SyncEngine para métodos que no lo requieren
     syncEngine = null;
   }
+=======
+  const syncEngine = new SyncEngine(db);
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
 
   // Sincronización completa
   ipcMain.handle('sync-full', async () => {
     try {
+<<<<<<< HEAD
       if (!syncEngine) {
         throw new Error('SyncEngine no inicializado');
       }
+=======
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
       const result = await syncEngine.syncFull();
       return { success: true, data: result };
     } catch (error) {
@@ -57,9 +68,12 @@ function registerSyncHandlers(db) {
   // Sincronización PULL (descargar del servidor)
   ipcMain.handle('sync-pull', async () => {
     try {
+<<<<<<< HEAD
       if (!syncEngine) {
         throw new Error('SyncEngine no inicializado');
       }
+=======
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
       const result = await syncEngine.syncPull();
       return { success: true, data: result };
     } catch (error) {
@@ -71,9 +85,12 @@ function registerSyncHandlers(db) {
   // Sincronización PUSH (enviar al servidor)
   ipcMain.handle('sync-push', async () => {
     try {
+<<<<<<< HEAD
       if (!syncEngine) {
         throw new Error('SyncEngine no inicializado');
       }
+=======
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
       const result = await syncEngine.syncPush();
       return { success: true, data: result };
     } catch (error) {
@@ -85,6 +102,7 @@ function registerSyncHandlers(db) {
   // Verificar conexión con el servidor
   ipcMain.handle('sync-check-connection', async () => {
     try {
+<<<<<<< HEAD
       if (!syncEngine) {
         // Si no hay SyncEngine, verificar configuración directamente
         const config = db.prepare('SELECT * FROM sync_config WHERE id = 1').get();
@@ -109,6 +127,8 @@ function registerSyncHandlers(db) {
           return { success: true, data: { connected: false, message: error.message } };
         }
       }
+=======
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
       const result = await syncEngine.checkConnection();
       return { success: true, data: result };
     } catch (error) {
@@ -119,6 +139,7 @@ function registerSyncHandlers(db) {
   // Obtener estadísticas de sincronización
   ipcMain.handle('sync-get-stats', () => {
     try {
+<<<<<<< HEAD
       if (!syncEngine) {
         // Retornar stats básicos sin SyncEngine
         const config = db.prepare('SELECT * FROM sync_config WHERE id = 1').get();
@@ -133,6 +154,8 @@ function registerSyncHandlers(db) {
           }
         };
       }
+=======
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
       const stats = syncEngine.getSyncStats();
       return { success: true, data: stats };
     } catch (error) {
@@ -255,6 +278,7 @@ function registerSyncHandlers(db) {
     }
   });
 
+<<<<<<< HEAD
   console.log('✅ Handlers de sincronización registrados:');
   console.log('   - sync-configure');
   console.log('   - sync-check-connection');
@@ -267,6 +291,9 @@ function registerSyncHandlers(db) {
   console.log('   - sync-get-conflicts');
   console.log('   - sync-resolve-conflict');
   console.log('   - sync-clean-log');
+=======
+  console.log('✅ Handlers de sincronización registrados');
+>>>>>>> 746344c3d9225b087f0aa8ef4645a7e89f400809
 }
 
 module.exports = { registerSyncHandlers };
