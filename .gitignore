@@ -35,10 +35,10 @@ Api_sync.php
 IMAXPOS_API_Sync.postman_collection.json
 Sync_model_corregido.php
 Sync_model.php
-diagnostico-api.js
+.diagnostico-api.js
 sync-config.json
-test-diagnostico.js
-test-sync-empresa42.js
+.test-diagnostico.js
+.test-sync-empresa42.js
 verificar-apikey.sql
 verificar-password.sql
 
