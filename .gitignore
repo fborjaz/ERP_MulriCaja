@@ -27,7 +27,12 @@ node_modules/
 Thumbs.db
 
 # Database files
+
 *.db # Ignora cualquier archivo de base de datos SQLite generado en el directorio del proyecto
+IMAXPOS_API_Sync.postman_collection.json
+diagnostico-api.js
+sync-config.json
+test-sync-empresa42.js
 
 # Build artifacts (explicitly for common installer types if not covered by dist/)
 *.exe

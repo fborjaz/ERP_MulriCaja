@@ -61,6 +61,7 @@ import { CotizacionesView } from "./modules/cotizaciones/cotizaciones.view.js";
 import { ContabilidadView } from "./modules/contabilidad/contabilidad.view.js";
 import { NotasCreditoView } from "./modules/notas-credito/notas-credito.view.js";
 import { ConfiguracionView } from "./modules/configuracion/configuracion.view.js";
+import { SyncView } from "./modules/sync/sync.view.js";
 
 // Registrar Rutas
 router.register("dashboard", DashboardView);
@@ -76,6 +77,7 @@ router.register("cotizaciones", CotizacionesView);
 router.register("contabilidad", ContabilidadView);
 router.register("notas-credito", NotasCreditoView);
 router.register("configuracion", ConfiguracionView);
+router.register("sincronizacion", SyncView);
 
 // --- Lógica de Inicialización de UI ---
 

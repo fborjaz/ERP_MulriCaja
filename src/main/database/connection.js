@@ -33,36 +33,65 @@ function initDatabase() {
 
   const db = new Database(dbPath);
 
-  // SIEMPRE ejecutar el schema principal (usa CREATE TABLE IF NOT EXISTS)
-  const schemaPath = getResourcePath("database/schema.sql");
+  // SIEMPRE ejecutar el schema completo de IMAXPOS (154 tablas)
+  const schemaImaxposPath = getResourcePath("database/schema_imaxpos_complete.sql");
 
-  if (fs.existsSync(schemaPath)) {
+  if (fs.existsSync(schemaImaxposPath)) {
     try {
-      const schema = fs.readFileSync(schemaPath, "utf8");
-      db.exec(schema);
-      console.log("✅ Schema principal ejecutado desde:", schemaPath);
+      const schemaImaxpos = fs.readFileSync(schemaImaxposPath, "utf8");
+      db.exec(schemaImaxpos);
+      console.log("✅ Schema IMAXPOS completo ejecutado (154 tablas)");
+      console.log("   📦 Desde:", schemaImaxposPath);
     } catch (error) {
-      console.error("❌ Error ejecutando schema.sql:", error);
-      // Fallback a init.js
+      console.error("❌ Error ejecutando schema_imaxpos_complete.sql:", error);
+      console.error("   Intentando con schema.sql fallback...");
+      
+      // Fallback al schema básico
+      const schemaPath = getResourcePath("database/schema.sql");
+      if (fs.existsSync(schemaPath)) {
+        try {
+          const schema = fs.readFileSync(schemaPath, "utf8");
+          db.exec(schema);
+          console.log("✅ Schema básico ejecutado (fallback)");
+        } catch (fallbackError) {
+          console.error("❌ Error ejecutando schema.sql:", fallbackError);
+        }
+      }
+    }
+  } else {
+    console.log("⚠️ schema_imaxpos_complete.sql no encontrado");
+    console.log("   Intentando con schema.sql...");
+    
+    // Fallback al schema básico
+    const schemaPath = getResourcePath("database/schema.sql");
+    if (fs.existsSync(schemaPath)) {
+      try {
+        const schema = fs.readFileSync(schemaPath, "utf8");
+        db.exec(schema);
+        console.log("✅ Schema básico ejecutado");
+      } catch (error) {
+        console.error("❌ Error ejecutando schema.sql:", error);
+        // Fallback final a init.js
+        try {
+          const initPath = getResourcePath("database/init.js");
+          if (fs.existsSync(initPath)) {
+            require(initPath)(db);
+            console.log("✅ Base de datos inicializada con init.js");
+          }
+        } catch (initError) {
+          console.error("❌ Error en init.js:", initError);
+        }
+      }
+    } else {
+      console.log("⚠️ Ningún schema encontrado, usando init.js");
       try {
         const initPath = getResourcePath("database/init.js");
         if (fs.existsSync(initPath)) {
           require(initPath)(db);
         }
-      } catch (initError) {
-        console.error("❌ Error en init.js:", initError);
+      } catch (error) {
+        console.error("❌ Error cargando init.js:", error);
       }
-    }
-  } else {
-    console.log("⚠️ schema.sql no encontrado, usando init.js");
-    // Crear base de datos básica usando init.js
-    try {
-      const initPath = getResourcePath("database/init.js");
-      if (fs.existsSync(initPath)) {
-        require(initPath)(db);
-      }
-    } catch (error) {
-      console.error("❌ Error cargando init.js:", error);
     }
   }
 
@@ -98,14 +127,18 @@ function initDatabase() {
     console.log("⚠️ Algunas tablas adicionales ya existen:", error.message);
   }
 
-  // Verificar tablas críticas
+  // Verificar tablas críticas de IMAXPOS
   const criticalTables = [
-    "ventas",
-    "clientes",
-    "productos",
-    "categorias",
-    "usuarios",
-    "cajas",
+    "venta",
+    "cliente",
+    "producto",
+    "usuario",
+    "caja",
+    "local",
+    "moneda",
+    "sync_config",
+    "sync_metadata",
+    "sync_log"
   ];
   const existingTables = db
     .prepare("SELECT name FROM sqlite_master WHERE type='table'")

@@ -13,6 +13,7 @@ const { registerDatabaseHandlers } = require("./ipc/database");
 const { registerBackupHandlers } = require("./ipc/backup");
 const { registerConfigHandlers } = require("./ipc/config");
 const { registerExportHandlers } = require("./ipc/export");
+const { registerSyncHandlers } = require("./ipc/sync");
 
 // Inicializar store
 const store = new Store();
@@ -99,6 +100,7 @@ app.whenReady().then(() => {
   registerBackupHandlers(db, setDb);
   registerConfigHandlers(store);
   registerExportHandlers();
+  registerSyncHandlers(db);
 
   // Crear ventana
   createWindow();
