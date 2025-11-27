@@ -81,12 +81,69 @@ export const ProductosView = {
         .productos-table td:first-child {
           display: none;
         }
+        .productos-opciones-wrapper {
+          position: relative;
+          display: inline-block;
+        }
+        .dropdown-toggle {
+          background: #007bff;
+          color: white;
+          border: none;
+          padding: 6px 12px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+        }
+        .dropdown-toggle:hover {
+          background: #0056b3;
+        }
         .dropdown-menu {
+          display: none;
           position: absolute;
-          transform: translate3d(-165px, -78px, 0px);
-          top: 0px;
-          left: 0px;
-          will-change: transform;
+          right: 0;
+          top: 100%;
+          z-index: 1000;
+          min-width: 180px;
+          background: white;
+          border: 1px solid #dee2e6;
+          border-radius: 4px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          margin-top: 5px;
+          overflow: hidden;
+        }
+        .dropdown-menu.show {
+          display: block;
+        }
+        .dropdown-item {
+          display: block;
+          padding: 10px 15px;
+          color: #495057;
+          text-decoration: none;
+          cursor: pointer;
+          transition: background-color 0.2s;
+          border: none;
+          background: none;
+          width: 100%;
+          text-align: left;
+          font-size: 14px;
+        }
+        .dropdown-item:hover {
+          background-color: #f8f9fa;
+        }
+        .dropdown-item i,
+        .dropdown-item .material-icons {
+          margin-right: 8px;
+          font-size: 16px;
+          vertical-align: middle;
+        }
+        .dropdown-divider {
+          height: 1px;
+          margin: 5px 0;
+          overflow: hidden;
+          background-color: #e9ecef;
         }
         .nav-tabs {
           border-bottom: 2px solid #dee2e6;
@@ -621,7 +678,7 @@ export const ProductosView = {
             .map(
               (g) => `<option value="${g.id_grupo}">${g.nombre_grupo}</option>`
             )
-            .join("");
+        .join("");
       }
     } catch (error) {
       console.error("Error cargando categorías:", error);
@@ -700,7 +757,7 @@ export const ProductosView = {
 
       // Cargar impuestos
       const impuestos = await api.dbQuery(
-        "SELECT id_impuesto, nombre_impuesto, porcentaje_impuesto FROM impuestos WHERE estatus_impuesto = 1 ORDER BY nombre_impuesto"
+        "SELECT id_impuesto, nombre_impuesto, porcentaje_impuesto FROM impuestos WHERE estado_impuesto = 1 ORDER BY nombre_impuesto"
       );
       const selectImpuesto = document.getElementById("producto_impuesto");
       if (selectImpuesto) {
@@ -910,56 +967,96 @@ export const ProductosView = {
           </span>
         </td>
         <td style="text-align: center;">
-          <div class="btn-group">
-            <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <i class="fa fa-list-ul fa-sm"></i>
+          <div class="productos-opciones-wrapper">
+            <button type="button" class="dropdown-toggle" data-producto-id="${p.id}">
+              <span class="material-icons" style="font-size: 18px;">more_vert</span>
             </button>
-            <div class="dropdown-menu" style="text-align: left;">
-              <a class="dropdown-item" onclick="this.closest('tr').querySelector('.btn-editar').click();">
-                <i class="fa fa-pencil" style="padding-right: 5px;"></i> Editar
-              </a>
-              <a class="dropdown-item" href="#">
-                <i class="fa fa-list" style="padding-right: 5px;"></i> Detalles
-              </a>
-              <a class="dropdown-item" href="#">
-                <i class="fa fa-copy" style="padding-right: 5px;"></i> Duplicar
-              </a>
+            <div class="dropdown-menu" id="dropdown-${p.id}">
+              <button type="button" class="dropdown-item" data-action="editar" data-id="${p.id}">
+                <span class="material-icons" style="font-size: 18px;">edit</span>
+                Editar
+              </button>
+              <button type="button" class="dropdown-item" data-action="detalles" data-id="${p.id}">
+                <span class="material-icons" style="font-size: 18px;">info</span>
+                Detalles
+              </button>
+              <button type="button" class="dropdown-item" data-action="duplicar" data-id="${p.id}">
+                <span class="material-icons" style="font-size: 18px;">content_copy</span>
+                Duplicar
+              </button>
+              <button type="button" class="dropdown-item" data-action="codigo-barra" data-id="${p.id}">
+                <span class="material-icons" style="font-size: 18px;">qr_code</span>
+                Código de barra
+              </button>
               <div class="dropdown-divider"></div>
-              <a class="dropdown-item" onclick="this.closest('tr').querySelector('.btn-eliminar').click();">
-                <i class="fa fa-trash-o" style="padding-right: 5px;"></i> Eliminar
-              </a>
+              <button type="button" class="dropdown-item" data-action="eliminar" data-id="${p.id}" style="color: #dc3545;">
+                <span class="material-icons" style="font-size: 18px;">delete</span>
+                Eliminar
+              </button>
             </div>
           </div>
-          <button class="btn btn-sm btn-secondary btn-editar" data-id="${
-            p.id
-          }" style="display: none;">
-            <span class="material-icons" style="font-size: 18px;">edit</span>
-          </button>
-          <button class="btn btn-sm btn-danger btn-eliminar" data-id="${
-            p.id
-          }" style="display: none;">
-            <span class="material-icons" style="font-size: 18px;">delete</span>
-          </button>
         </td>
       </tr>
     `;
       })
       .join("");
 
-    tbody
-      .querySelectorAll(".btn-editar")
-      .forEach((btn) =>
-        btn.addEventListener("click", () =>
-          this.editarProducto(parseInt(btn.dataset.id))
-        )
-      );
-    tbody
-      .querySelectorAll(".btn-eliminar")
-      .forEach((btn) =>
-        btn.addEventListener("click", () =>
-          this.eliminarProducto(parseInt(btn.dataset.id))
-        )
-      );
+    // Event listeners para dropdowns
+    tbody.querySelectorAll(".dropdown-toggle").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const productoId = btn.getAttribute("data-producto-id");
+        const dropdown = document.getElementById(`dropdown-${productoId}`);
+        
+        // Cerrar todos los otros dropdowns
+        document.querySelectorAll(".dropdown-menu.show").forEach((menu) => {
+          if (menu !== dropdown) {
+            menu.classList.remove("show");
+          }
+        });
+        
+        // Toggle del dropdown actual
+        dropdown.classList.toggle("show");
+      });
+    });
+    
+    // Event listeners para acciones del dropdown
+    tbody.querySelectorAll(".dropdown-item").forEach((item) => {
+      item.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const action = item.getAttribute("data-action");
+        const productoId = parseInt(item.getAttribute("data-id"));
+        const dropdown = document.getElementById(`dropdown-${productoId}`);
+        dropdown.classList.remove("show");
+        
+        switch (action) {
+          case "editar":
+            this.editarProducto(productoId);
+            break;
+          case "detalles":
+            this.mostrarDetalles(productoId);
+            break;
+          case "duplicar":
+            this.duplicarProducto(productoId);
+            break;
+          case "codigo-barra":
+            this.mostrarCodigoBarra(productoId);
+            break;
+          case "eliminar":
+            this.eliminarProducto(productoId);
+            break;
+        }
+      });
+    });
+    
+    // Cerrar dropdowns al hacer clic fuera
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".productos-opciones-wrapper")) {
+        document.querySelectorAll(".dropdown-menu.show").forEach((menu) => {
+          menu.classList.remove("show");
+        });
+      }
+    });
   },
 
   filtrarProductos(filtro) {
@@ -1041,19 +1138,19 @@ export const ProductosView = {
       );
 
       if (!productos || productos.length === 0) {
-        toast.error("Producto no encontrado");
-        return;
-      }
+      toast.error("Producto no encontrado");
+      return;
+    }
 
       const producto = productos[0];
-      this.editandoId = id;
+    this.editandoId = id;
 
       // Cargar datos del formulario
       await this.cargarDatosFormulario();
 
       document.getElementById("editando").value = "1";
       document.getElementById("iddos").value = producto.producto_id;
-      document.getElementById("modal-producto-titulo").textContent =
+    document.getElementById("modal-producto-titulo").textContent =
         "Actualizar producto";
 
       // Llenar campos del formulario
@@ -1113,7 +1210,7 @@ export const ProductosView = {
       // Resetear pestaña a la primera
       this.cambiarPestaña("lista");
 
-      document.getElementById("modal-producto").classList.remove("hidden");
+    document.getElementById("modal-producto").classList.remove("hidden");
     } catch (error) {
       console.error("Error cargando producto para editar:", error);
       toast.error("Error al cargar el producto");
@@ -1270,8 +1367,8 @@ export const ProductosView = {
 
         if (codigoExiste && codigoExiste.length > 0) {
           toast.error("El codigo de barra ya existe");
-          return;
-        }
+        return;
+      }
       }
 
       // Validar nombre requerido
@@ -1397,7 +1494,7 @@ export const ProductosView = {
         // Insertar unidades y precios
         for (let i = 0; i < medidas.length; i++) {
           if (medidas[i]) {
-            await api.dbQuery(
+        await api.dbQuery(
               "INSERT INTO unidades_has_producto (producto_id, id_unidad, unidades, orden) VALUES (?, ?, ?, ?)",
               [productoId, medidas[i], unidades[i], i + 1]
             );
@@ -1405,7 +1502,7 @@ export const ProductosView = {
             // Insertar precio de venta (id_precio = 1)
             const precioVenta = precios.find((p) => p.row === i);
             if (precioVenta) {
-              await api.dbQuery(
+        await api.dbQuery(
                 "INSERT INTO unidades_has_precio (id_producto, id_unidad, id_precio, precio) VALUES (?, ?, ?, ?)",
                 [productoId, medidas[i], 1, precioVenta.precio]
               );
@@ -1422,11 +1519,11 @@ export const ProductosView = {
 
         if (localesSeleccionados.length > 0 && stockInicial > 0) {
           for (const localId of localesSeleccionados) {
-            await api.dbQuery(
+          await api.dbQuery(
               "INSERT OR REPLACE INTO producto_almacen (id_local, id_producto, cantidad, fraccion) VALUES (?, ?, ?, ?)",
               [localId, productoId, stockInicial, 0]
-            );
-          }
+          );
+        }
         }
 
         toast.success("Producto creado correctamente");
@@ -1460,12 +1557,174 @@ export const ProductosView = {
           "UPDATE producto SET producto_nombre = ?, producto_estatus = 0 WHERE producto_id = ?",
           [`${nombre} ELIMINADO: ${fecha}`, id]
         );
-        toast.success("Producto eliminado correctamente");
-        await this.cargarProductos();
+      toast.success("Producto eliminado correctamente");
+      await this.cargarProductos();
       }
     } catch (error) {
       console.error("Error eliminando producto:", error);
       toast.error("Error al eliminar el producto");
+    }
+  },
+
+  async mostrarDetalles(id) {
+    try {
+      const producto = await db.getProductos();
+      const prod = producto.find((p) => p.id === id);
+      
+      if (!prod) {
+        toast.error("Producto no encontrado");
+        return;
+      }
+
+      // Crear modal de detalles
+      const modalHtml = `
+        <div id="modal-detalles" class="modal-backdrop">
+          <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+              <h2>Detalles del Producto</h2>
+              <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-detalles').remove()">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                  <h3 style="margin-bottom: 15px; color: #495057;">Información General</h3>
+                  <div style="margin-bottom: 10px;"><strong>Nombre:</strong> ${prod.producto_nombre || "-"}</div>
+                  <div style="margin-bottom: 10px;"><strong>Código de Barra:</strong> ${prod.producto_codigo_barra || "-"}</div>
+                  <div style="margin-bottom: 10px;"><strong>Tipo:</strong> ${prod.producto_tipo || "-"}</div>
+                  <div style="margin-bottom: 10px;"><strong>Descripción:</strong> ${prod.producto_descripcion || "-"}</div>
+                  <div style="margin-bottom: 10px;"><strong>Proveedor:</strong> ${prod.producto_proveedor || "-"}</div>
+                  <div style="margin-bottom: 10px;"><strong>Stock Mínimo:</strong> ${prod.producto_stockminimo || 0}</div>
+                </div>
+                <div>
+                  <h3 style="margin-bottom: 15px; color: #495057;">Información Adicional</h3>
+                  <div style="margin-bottom: 10px;"><strong>Impuesto:</strong> ${prod.producto_impuesto || "-"}</div>
+                  <div style="margin-bottom: 10px;"><strong>Fecha de Vencimiento:</strong> ${prod.producto_vencimiento ? new Date(prod.producto_vencimiento).toLocaleDateString('es-ES') : "-"}</div>
+                  <div style="margin-bottom: 10px;"><strong>Estado:</strong> ${prod.producto_estado == 1 ? "Activo" : "Inactivo"}</div>
+                  <div style="margin-bottom: 10px;"><strong>Costo Unitario:</strong> RD$ ${(prod.producto_costo_unitario || 0).toFixed(2)}</div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-detalles').remove()">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML("beforeend", modalHtml);
+    } catch (error) {
+      console.error("Error mostrando detalles:", error);
+      toast.error("Error al mostrar los detalles del producto");
+    }
+  },
+
+  async duplicarProducto(id) {
+    try {
+      if (!confirm("¿Desea duplicar este producto? Se creará una copia con un nuevo código.")) {
+        return;
+      }
+
+      // Obtener producto original
+      const productos = await db.getProductos();
+      const productoOriginal = productos.find((p) => p.id === id);
+      
+      if (!productoOriginal) {
+        toast.error("Producto no encontrado");
+        return;
+      }
+
+      // Abrir modal en modo edición pero con datos del producto original
+      this.editandoId = null;
+      document.getElementById("editando").value = "0";
+      document.getElementById("iddos").value = "";
+      document.getElementById("modal-producto-titulo").textContent = "Duplicar producto";
+      
+      // Cargar datos del formulario
+      await this.cargarDatosFormulario();
+      
+      // Llenar formulario con datos del producto original
+      document.getElementById("producto_tipo").value = productoOriginal.producto_tipo || "PRODUCTO";
+      document.getElementById("codigodebarra").value = "";
+      document.getElementById("producto_nombre").value = `${productoOriginal.producto_nombre} (Copia)`;
+      document.getElementById("producto_descripcion").value = productoOriginal.producto_descripcion || "";
+      
+      if (productoOriginal.producto_marca) document.getElementById("producto_marca").value = productoOriginal.producto_marca;
+      if (productoOriginal.produto_grupo) document.getElementById("produto_grupo").value = productoOriginal.produto_grupo;
+      if (productoOriginal.producto_familia) document.getElementById("producto_familia").value = productoOriginal.producto_familia;
+      if (productoOriginal.producto_linea) document.getElementById("producto_linea").value = productoOriginal.producto_linea;
+      if (productoOriginal.producto_proveedor) document.getElementById("producto_proveedor").value = productoOriginal.producto_proveedor;
+      
+      document.getElementById("producto_stockminimo").value = productoOriginal.producto_stockminimo || 0;
+      document.getElementById("producto_vencimiento").value = productoOriginal.producto_vencimiento || "";
+      if (productoOriginal.producto_impuesto) document.getElementById("producto_impuesto").value = productoOriginal.producto_impuesto;
+      
+      document.getElementById(`producto_estado_${productoOriginal.producto_estado || 1}`).checked = true;
+      document.getElementById(`producto_venta_${productoOriginal.producto_venta || 1}`).checked = true;
+      
+      document.getElementById("costo_unitario").value = productoOriginal.producto_costo_unitario || 0;
+      
+      // Resetear pestaña
+      this.cambiarPestaña("lista");
+      
+      // Mostrar modal
+      document.getElementById("modal-producto").classList.remove("hidden");
+      
+      toast.info("Complete los datos del producto duplicado y guarde");
+    } catch (error) {
+      console.error("Error duplicando producto:", error);
+      toast.error("Error al duplicar el producto");
+    }
+  },
+
+  async mostrarCodigoBarra(id) {
+    try {
+      const productos = await db.getProductos();
+      const producto = productos.find((p) => p.id === id);
+      
+      if (!producto) {
+        toast.error("Producto no encontrado");
+        return;
+      }
+
+      const codigoBarra = producto.producto_codigo_barra;
+      
+      if (!codigoBarra || codigoBarra === "-") {
+        toast.warning("Este producto no tiene código de barra asignado");
+        return;
+      }
+
+      // Crear modal para mostrar código de barra
+      const modalHtml = `
+        <div id="modal-codigo-barra" class="modal-backdrop">
+          <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+              <h2>Código de Barra</h2>
+              <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-codigo-barra').remove()">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align: center; padding: 40px;">
+              <div style="margin-bottom: 20px;">
+                <strong style="font-size: 18px;">${producto.producto_nombre}</strong>
+              </div>
+              <div style="margin-bottom: 30px; font-size: 32px; font-weight: bold; letter-spacing: 4px; font-family: monospace;">
+                ${codigoBarra}
+              </div>
+              <div style="margin-top: 20px;">
+                <button type="button" class="btn btn-primary" onclick="navigator.clipboard.writeText('${codigoBarra}').then(() => { alert('Código copiado al portapapeles'); })">
+                  <span class="material-icons" style="vertical-align: middle;">content_copy</span> Copiar Código
+                </button>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-codigo-barra').remove()">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML("beforeend", modalHtml);
+    } catch (error) {
+      console.error("Error mostrando código de barra:", error);
+      toast.error("Error al mostrar el código de barra");
     }
   },
 };

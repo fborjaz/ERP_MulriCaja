@@ -821,29 +821,64 @@ export const SetupView = {
         // Obtener columnas de la tabla local para filtrar solo las que existen
         let localColumns = [];
         try {
-          const tableInfo = await api.dbQuery(`PRAGMA table_info(${tableName})`);
-          localColumns = tableInfo.map(col => col.name);
+          const tableInfo = await api.dbQuery(
+            `PRAGMA table_info(${tableName})`
+          );
+          localColumns = tableInfo.map((col) => col.name);
         } catch (pragmaError) {
-          console.warn(`⚠️ No se pudieron obtener columnas de ${tableName}, intentando insertar todas`);
+          console.warn(
+            `⚠️ No se pudieron obtener columnas de ${tableName}, intentando insertar todas`
+          );
         }
+
+        // Mapeo de columnas entre nube y local (para compatibilidad)
+        const columnMapping = {
+          impuestos: {
+            estatus_impuesto: "estado_impuesto", // Si viene estatus_impuesto, mapear a estado_impuesto
+          },
+          local: {
+            int_local_id: "id_local", // Si viene int_local_id, mapear a id_local
+            local_nombre: "nombre_local", // Si viene local_nombre, mapear a nombre_local
+            local_status: "estado", // Si viene local_status, mapear a estado
+          },
+        };
 
         // Insertar todos los registros de esta tabla
         for (const record of records) {
           try {
+            // Aplicar mapeo de columnas si existe
+            let mappedRecord = { ...record };
+            if (columnMapping[tableName]) {
+              const mapping = columnMapping[tableName];
+              for (const cloudCol in mapping) {
+                const localCol = mapping[cloudCol];
+                if (cloudCol in mappedRecord) {
+                  // Si la columna local existe, copiar el valor
+                  if (localColumns.includes(localCol)) {
+                    mappedRecord[localCol] = mappedRecord[cloudCol];
+                  }
+                  // Si ambas columnas existen (nube y local), mantener ambas con el mismo valor
+                  // Si solo existe la de nube, no eliminarla (se filtrará después)
+                }
+              }
+            }
+
             // Filtrar solo las columnas que existen en la tabla local
-            let filteredRecord = record;
+            let filteredRecord = mappedRecord;
             if (localColumns.length > 0) {
               filteredRecord = {};
-              for (const key in record) {
+              for (const key in mappedRecord) {
                 if (localColumns.includes(key)) {
-                  filteredRecord[key] = record[key];
+                  filteredRecord[key] = mappedRecord[key];
                 }
               }
             }
 
             // Si no hay columnas válidas, saltar este registro
             if (Object.keys(filteredRecord).length === 0) {
-              console.warn(`⚠️ Registro de ${tableName} sin columnas válidas, omitiendo`);
+              console.warn(
+                `⚠️ Registro de ${tableName} sin columnas válidas, omitiendo`
+              );
               continue;
             }
 
@@ -859,7 +894,10 @@ export const SetupView = {
               values
             );
           } catch (error) {
-            console.warn(`⚠️ Error guardando registro en ${tableName}:`, error.message);
+            console.warn(
+              `⚠️ Error guardando registro en ${tableName}:`,
+              error.message
+            );
             // Continuar con el siguiente registro
           }
         }

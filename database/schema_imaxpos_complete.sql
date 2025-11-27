@@ -1250,6 +1250,8 @@ CREATE TABLE IF NOT EXISTS impuestos (
   nombre_impuesto VARCHAR(100) NOT NULL,
   porcentaje_impuesto REAL NOT NULL,
   estado_impuesto INTEGER DEFAULT 1,
+  estatus_impuesto INTEGER DEFAULT 1, -- Compatibilidad con nube
+  mostrar_impuesto INTEGER DEFAULT 1, -- Compatibilidad con nube
   cuenta_id INTEGER,
   codigo VARCHAR(20)
 );
