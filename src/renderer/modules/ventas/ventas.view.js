@@ -23,6 +23,7 @@ export const VentasView = {
   tipoImpuesto: 1, // 1 = Incluye impuesto, 2 = Agregar impuesto, 3 = No considerar impuesto
   productosLista: [], // Lista completa de productos para el grid
   productosFiltrados: [], // Productos filtrados por búsqueda
+  fechaHoraInterval: null, // Intervalo para actualizar fecha/hora
 
   render() {
     return `
@@ -568,53 +569,132 @@ export const VentasView = {
 
             <!-- SECCIÓN DERECHA: Totales y Configuración -->
             <div class="venta-right">
-              <div style="padding: 15px; border-bottom: 1px solid #dee2e6;">
-              <div class="form-group">
-                  <label class="control-label">Tipo de Impuesto</label>
-                  <select name="tipo_impuesto" id="tipo_impuesto" class="form-control">
-                    <option value="1">Incluye impuesto</option>
-                    <option value="2">Agregar impuesto</option>
-                    <option value="3">No considerar impuesto</option>
+              <!-- CUADRO: Fecha/Hora y Opciones -->
+              <div class="configuracion-card" style="margin-bottom: 15px; border: 1px solid #dee2e6; border-radius: 4px; background: white;">
+                <!-- Fecha y Hora -->
+                <div style="padding: 15px; border-bottom: 2px solid #007bff; background: #f8f9fa;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <div style="font-size: 12px; color: #6c757d; margin-bottom: 5px;">Fecha</div>
+                      <div id="venta-fecha-hora" style="font-size: 16px; font-weight: bold; color: #333;"></div>
+            </div>
+                    <div style="text-align: right;">
+                      <div style="font-size: 12px; color: #6c757d; margin-bottom: 5px;">Hora</div>
+                      <div id="venta-hora-display" style="font-size: 16px; font-weight: bold; color: #333;"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Grid 2x3 de Opciones -->
+                <div style="padding: 15px;">
+                  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <!-- Fila 1: Tipo de Impuesto | Descuento -->
+                    <!-- Tipo de Impuesto -->
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="control-label" style="font-size: 12px; margin-bottom: 5px;">Tipo de Impuesto</label>
+                      <select name="tipo_impuesto" id="tipo_impuesto" class="form-control" style="font-size: 13px; padding: 6px 8px;">
+                        <option value="1">Incluye impuesto</option>
+                        <option value="2">Agregar impuesto</option>
+                        <option value="3">No considerar impuesto</option>
                 </select>
               </div>
-                
-                <div class="form-group">
-                  <label class="control-label">Descuento General</label>
-                  <div class="input-group-inline" style="margin-bottom: 5px;">
-                    <input type="radio" name="t_descuento_venta" id="t_descuento_venta_por" value="1" checked>
-                    <label for="t_descuento_venta_por" style="margin: 0;">%</label>
-                    <input type="radio" name="t_descuento_venta" id="t_descuento_venta_mon" value="2">
-                    <label for="t_descuento_venta_mon" style="margin: 0;">$</label>
+                    
+                    <!-- Descuento General -->
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="control-label" style="font-size: 12px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
+                        Descuento
+                        <label style="display: flex; align-items: center; gap: 3px; font-size: 12px; cursor: pointer; margin: 0; font-weight: normal;">
+                          <input type="radio" name="t_descuento_venta" id="t_descuento_venta_por" value="1" checked>
+                          <span>%</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 3px; font-size: 12px; cursor: pointer; margin: 0; font-weight: normal;">
+                          <input type="radio" name="t_descuento_venta" id="t_descuento_venta_mon" value="2">
+                          <span>RD$</span>
+                        </label>
+                      </label>
+                      <input type="number" id="descuento-ventas" class="form-control" value="0" min="0" step="0.01" style="font-size: 13px; padding: 6px 8px;">
               </div>
-                  <input type="number" id="descuento-ventas" class="form-control" value="0" min="0" step="0.01">
+                    
+                    <!-- Fila 2: Número de orden | Fecha de orden -->
+                    <!-- Número de Orden -->
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="control-label" style="font-size: 12px; margin-bottom: 5px;">Número de orden</label>
+                      <input type="text" name="numero_orden" id="numero_orden" class="form-control" placeholder="Auto" style="font-size: 13px; padding: 6px 8px;">
               </div>
-
-                <div class="form-group">
-                  <label class="control-label">Fecha de venta</label>
-                  <input type="date" name="fecha_venta" id="fecha_venta" class="form-control" value="${
-                    new Date().toISOString().split("T")[0]
-                  }">
+                    
+                    <!-- Fecha de Orden -->
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="control-label" style="font-size: 12px; margin-bottom: 5px;">Fecha de orden</label>
+                      <input type="date" name="fecha_orden" id="fecha_orden" class="form-control" value="${
+                        new Date().toISOString().split("T")[0]
+                      }" style="font-size: 13px; padding: 6px 8px;">
             </div>
+                    
+                    <!-- Fila 3: Fecha de venta | Fecha de entrega -->
+                    <!-- Fecha de Venta -->
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="control-label" style="font-size: 12px; margin-bottom: 5px;">Fecha de venta</label>
+                      <input type="date" name="fecha_venta" id="fecha_venta" class="form-control" value="${
+                        new Date().toISOString().split("T")[0]
+                      }" style="font-size: 13px; padding: 6px 8px;">
           </div>
-
-              <!-- Totales -->
-              <div class="totals-section">
-                <div class="total-item">
-                  <span>Subtotal:</span>
-                  <span id="subtotal">RD$ 0.00</span>
+                    
+                    <!-- Fecha de Entrega -->
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="control-label" style="font-size: 12px; margin-bottom: 5px;">Fecha de entrega</label>
+                      <input type="date" name="fecha_entrega" id="fecha_entrega" class="form-control" style="font-size: 13px; padding: 6px 8px;">
         </div>
-                <div class="total-item">
-                  <span>Descuento:</span>
-                  <span id="total-descuento">RD$ 0.00</span>
       </div>
-                <div class="total-item">
-                  <span>Impuesto:</span>
-                  <span id="impuesto">RD$ 0.00</span>
                 </div>
-                <div class="total-item final">
-                  <span>Total a Pagar:</span>
-                  <span id="total-importe">RD$ 0.00</span>
+              </div>
+
+              <!-- Detalle de la Factura -->
+              <div class="factura-detalle" style="border: 1px solid #dee2e6; border-radius: 4px; background: white; padding: 15px; margin-bottom: 15px;">
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #dee2e6;">Detalle de la factura</div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <span style="font-size: 13px; color: #6c757d;">Sub - Total</span>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 11px; color: #6c757d;">RD$</span>
+                    <span id="subtotal" style="font-size: 14px; font-weight: 500;">0.00</span>
+                  </div>
                 </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <span style="font-size: 13px; color: #6c757d;">Productos</span>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 11px; color: #6c757d;">TOTAL</span>
+                    <span id="total-productos" style="font-size: 14px; font-weight: 500;">0</span>
+                  </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 13px; color: #6c757d;">Descuento:</span>
+                    <span id="descuento-porcentaje" style="font-size: 13px; font-weight: 500; color: #dc3545;">0.00%</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 11px; color: #6c757d;">RD$</span>
+                    <span id="total-descuento" style="font-size: 14px; font-weight: 500; color: #dc3545;">0.00</span>
+                  </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <span style="font-size: 13px; color: #6c757d;">Impuesto:</span>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 11px; color: #6c757d;">RD$</span>
+                    <span id="impuesto" style="font-size: 14px; font-weight: 500;">0.00</span>
+                  </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 2px solid #28a745; margin-top: 10px;">
+                  <span style="font-size: 16px; font-weight: bold; color: #333;">Total a Pagar</span>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 12px; color: #6c757d;">RD$</span>
+                    <span id="total-importe" style="font-size: 18px; font-weight: bold; color: #28a745;">0.00</span>
+                  </div>
+                </div>
+                
                 <input type="hidden" name="subtotal" id="subtotal-hidden" value="0.00">
                 <input type="hidden" name="total_descuento" id="total_descuento-hidden" value="0.00">
                 <input type="hidden" name="total_impuesto" id="impuesto-hidden" value="0.00">
@@ -622,15 +702,9 @@ export const VentasView = {
               </div>
 
               <!-- Botones de Acción -->
-              <div style="padding: 15px; border-top: 1px solid #dee2e6;">
+              <div style="padding: 15px; border: 1px solid #dee2e6; border-radius: 4px; background: white;">
                 <button type="button" id="btn-terminar-venta" class="btn btn-success btn-lg btn-block">
                   <span class="material-icons">save</span> GUARDAR (F6)
-                </button>
-                <button type="button" id="btn-hold-venta" class="btn btn-info btn-block" style="margin-top: 10px;">
-                  <span class="material-icons">pause</span> EN ESPERA
-                </button>
-                <button type="button" id="btn-reiniciar" class="btn btn-warning btn-block" style="margin-top: 10px;">
-                  <span class="material-icons">refresh</span> REINICIAR
                 </button>
               </div>
             </div>
@@ -750,6 +824,14 @@ export const VentasView = {
     await this.cargarProductos();
     this.setupEventListeners();
     this.actualizarTotales();
+    this.actualizarFechaHora();
+    // Actualizar fecha/hora cada minuto
+    if (this.fechaHoraInterval) {
+      clearInterval(this.fechaHoraInterval);
+    }
+    this.fechaHoraInterval = setInterval(() => {
+      this.actualizarFechaHora();
+    }, 60000); // Cada 60 segundos
   },
 
   /**
@@ -1598,14 +1680,8 @@ export const VentasView = {
       .getElementById("btn-terminar-venta-side")
       ?.addEventListener("click", () => this.terminarVenta());
     document
-      .getElementById("btn-hold-venta")
-      ?.addEventListener("click", () => this.holdVenta());
-    document
       .getElementById("btn-hold-venta-side")
       ?.addEventListener("click", () => this.holdVenta());
-    document
-      .getElementById("btn-reiniciar")
-      ?.addEventListener("click", () => this.reiniciar());
     document
       .getElementById("btn-reiniciar-side")
       ?.addEventListener("click", () => this.reiniciar());
@@ -1670,6 +1746,12 @@ export const VentasView = {
     document
       .getElementById("producto-search")
       ?.removeEventListener("input", this.debouncedSearch);
+
+    // Limpiar intervalo de fecha/hora
+    if (this.fechaHoraInterval) {
+      clearInterval(this.fechaHoraInterval);
+      this.fechaHoraInterval = null;
+    }
   },
 
   /**
@@ -2064,14 +2146,26 @@ export const VentasView = {
       0
     );
 
+    // Contar productos totales (suma de cantidades)
+    const totalProductos = this.carrito.reduce(
+      (sum, item) => sum + (item.cantidad || 0),
+      0
+    );
+
     // Calcular descuento general
     let descuentoGeneralMonto = 0;
+    let descuentoPorcentaje = 0;
     if (this.descuentoGeneral > 0) {
       if (this.tipoDescuentoGeneral === "1") {
+        descuentoPorcentaje = this.descuentoGeneral;
         descuentoGeneralMonto =
           subtotalProductos * (this.descuentoGeneral / 100);
       } else {
         descuentoGeneralMonto = this.descuentoGeneral;
+        if (subtotalProductos > 0) {
+          descuentoPorcentaje =
+            (descuentoGeneralMonto / subtotalProductos) * 100;
+        }
       }
     }
 
@@ -2094,24 +2188,68 @@ export const VentasView = {
 
     const total = subtotalConDescuento + impuestoTotal;
 
-    // Actualizar UI
-    document.getElementById("subtotal").textContent =
-      formatCurrency(subtotalProductos);
-    document.getElementById("total-descuento").textContent = formatCurrency(
-      descuentoGeneralMonto
+    // Actualizar UI - Formato nuevo
+    const subtotalEl = document.getElementById("subtotal");
+    if (subtotalEl) subtotalEl.textContent = subtotalProductos.toFixed(2);
+
+    const totalProductosEl = document.getElementById("total-productos");
+    if (totalProductosEl) totalProductosEl.textContent = totalProductos;
+
+    const descuentoPorcentajeEl = document.getElementById(
+      "descuento-porcentaje"
     );
-    document.getElementById("impuesto").textContent =
-      formatCurrency(impuestoTotal);
-    document.getElementById("total-importe").textContent =
-      formatCurrency(total);
+    if (descuentoPorcentajeEl)
+      descuentoPorcentajeEl.textContent = descuentoPorcentaje.toFixed(2) + "%";
+
+    const totalDescuentoEl = document.getElementById("total-descuento");
+    if (totalDescuentoEl)
+      totalDescuentoEl.textContent = descuentoGeneralMonto.toFixed(2);
+
+    const impuestoEl = document.getElementById("impuesto");
+    if (impuestoEl) impuestoEl.textContent = impuestoTotal.toFixed(2);
+
+    const totalImporteEl = document.getElementById("total-importe");
+    if (totalImporteEl) totalImporteEl.textContent = total.toFixed(2);
 
     // Hidden fields
-    document.getElementById("subtotal-hidden").value =
-      subtotalProductos.toFixed(2);
-    document.getElementById("total_descuento-hidden").value =
-      descuentoGeneralMonto.toFixed(2);
-    document.getElementById("impuesto-hidden").value = impuestoTotal.toFixed(2);
-    document.getElementById("total-importe-hidden").value = total.toFixed(2);
+    const subtotalHidden = document.getElementById("subtotal-hidden");
+    if (subtotalHidden) subtotalHidden.value = subtotalProductos.toFixed(2);
+
+    const totalDescuentoHidden = document.getElementById(
+      "total_descuento-hidden"
+    );
+    if (totalDescuentoHidden)
+      totalDescuentoHidden.value = descuentoGeneralMonto.toFixed(2);
+
+    const impuestoHidden = document.getElementById("impuesto-hidden");
+    if (impuestoHidden) impuestoHidden.value = impuestoTotal.toFixed(2);
+
+    const totalImporteHidden = document.getElementById("total-importe-hidden");
+    if (totalImporteHidden) totalImporteHidden.value = total.toFixed(2);
+  },
+
+  /**
+   * Actualiza la fecha y hora en tiempo real
+   */
+  actualizarFechaHora() {
+    const now = new Date();
+
+    // Formatear fecha: DD/MM/YYYY
+    const dia = String(now.getDate()).padStart(2, "0");
+    const mes = String(now.getMonth() + 1).padStart(2, "0");
+    const año = now.getFullYear();
+    const fecha = `${dia}/${mes}/${año}`;
+
+    // Formatear hora: HH:MM
+    const horas = String(now.getHours()).padStart(2, "0");
+    const minutos = String(now.getMinutes()).padStart(2, "0");
+    const hora = `${horas}:${minutos}`;
+
+    const fechaEl = document.getElementById("venta-fecha-hora");
+    if (fechaEl) fechaEl.textContent = fecha;
+
+    const horaEl = document.getElementById("venta-hora-display");
+    if (horaEl) horaEl.textContent = hora;
   },
 
   /**
@@ -2749,7 +2887,11 @@ export const VentasView = {
       )
     ) {
       this.limpiarCarrito();
-      document.getElementById("producto-search").focus();
+      // Enfocar el selector de productos si existe
+      const productoSelect = document.getElementById("producto_id");
+      if (productoSelect) {
+        productoSelect.focus();
+      }
       toast.info("Venta reiniciada");
     }
   },
