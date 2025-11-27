@@ -18,6 +18,56 @@ export const ProductosView = {
 
   render() {
     return `
+      <style>
+        .productos-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .productos-table thead tr {
+          background-color: #f8f9fa;
+          border-bottom: 2px solid #dee2e6;
+        }
+        .productos-table th {
+          padding: 12px;
+          text-align: left;
+          font-weight: 600;
+          white-space: nowrap;
+          color: #495057;
+          font-size: 0.9rem;
+        }
+        .productos-table td {
+          padding: 12px;
+          border-bottom: 1px solid #dee2e6;
+          vertical-align: middle;
+        }
+        .productos-table tbody tr:hover {
+          background-color: #f8f9fa;
+        }
+        .badge-success {
+          background-color: #28a745;
+          color: white;
+        }
+        .badge-danger {
+          background-color: #dc3545;
+          color: white;
+        }
+        .badge-secondary {
+          background-color: #6c757d;
+          color: white;
+        }
+        .producto-imagen {
+          width: 50px;
+          height: 50px;
+          object-fit: cover;
+          border-radius: 4px;
+          border: 1px solid #dee2e6;
+        }
+        .producto-imagen-placeholder {
+          font-size: 24px;
+          color: #6c757d;
+          display: inline-block;
+        }
+      </style>
       <div class="view-container">
         <div class="view-header">
           <h1>Gestión de Productos</h1>
@@ -29,18 +79,20 @@ export const ProductosView = {
         
         <div class="card">
           <div class="card-body">
-            <div class="table-responsive">
-              <table class="table">
+            <div class="table-responsive" style="overflow-x: auto;">
+              <table class="table productos-table">
                 <thead>
                   <tr>
-                    <th>Código</th>
-                    <th>Nombre</th>
-                    <th>Categoría</th>
-                    <th>Costo</th>
-                    <th>Precio Venta</th>
-                    <th>Stock</th>
-                    <th>Stock Mín.</th>
-                    <th>Acciones</th>
+                    <th>Imagen</th>
+                    <th>Código de Barra</th>
+                    <th>Nombre del Producto</th>
+                    <th>Proveedor</th>
+                    <th>Stock Mínimo</th>
+                    <th>Impuesto</th>
+                    <th>Fecha de Vencimiento</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th style="text-align: center;">Opciones</th>
                   </tr>
                 </thead>
                 <tbody id="productos-table-body">
@@ -167,30 +219,86 @@ export const ProductosView = {
     const tbody = document.getElementById("productos-table-body");
     if (this.productos.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="8" style="text-align: center;">No se encontraron productos</td></tr>';
+        '<tr><td colspan="10" style="text-align: center; padding: 20px;">No se encontraron productos</td></tr>';
       return;
     }
+    
+    // Función para formatear fecha
+    const formatDate = (dateStr) => {
+      if (!dateStr || dateStr === '') return '-';
+      try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return dateStr;
+        return date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      } catch {
+        return dateStr;
+      }
+    };
+
+    // Función para obtener URL de imagen
+    const getImageUrl = (imagenUrl, imagenTitulo) => {
+      if (imagenUrl && imagenUrl.trim() !== '') {
+        // Si es una URL completa, usarla directamente
+        if (imagenUrl.startsWith('http://') || imagenUrl.startsWith('https://')) {
+          return imagenUrl;
+        }
+        // Si es una ruta relativa, construir URL completa (ajustar según tu estructura)
+        return imagenUrl;
+      }
+      return null;
+    };
+
     tbody.innerHTML = this.productos
       .map(
-        (p) => `
-      <tr class="${p.stock_actual <= p.stock_minimo ? "text-danger" : ""}">
-        <td>${p.codigo || "N/A"}</td>
-        <td>${p.nombre}</td>
-        <td>${p.categoria_nombre}</td>
-        <td>${formatCurrency(p.precio_costo)}</td>
-        <td>${formatCurrency(p.precio_venta)}</td>
-        <td>${p.stock_actual}</td>
-        <td>${p.stock_minimo}</td>
+        (p) => {
+          const imagenUrl = getImageUrl(p.imagen_url, p.imagen_titulo);
+          const estadoValue = p.estado !== null && p.estado !== undefined ? p.estado : (p.estatus || 1);
+          const estadoClass = estadoValue === 1 || estadoValue === true ? 'badge-success' : 'badge-danger';
+          const estadoText = estadoValue === 1 || estadoValue === true ? 'Activo' : 'Inactivo';
+          
+          return `
+      <tr class="${(p.stock_actual || 0) <= (p.stock_minimo || 0) ? "text-danger" : ""}">
+        <td style="text-align: center;">
+          ${imagenUrl 
+            ? `<img src="${imagenUrl}" alt="${p.nombre || ''}" class="producto-imagen" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+               <span class="producto-imagen-placeholder" style="display: none;">📦</span>`
+            : `<span class="producto-imagen-placeholder">📦</span>`
+          }
+        </td>
+        <td style="white-space: nowrap;">${p.codigo_barra || "-"}</td>
+        <td style="font-weight: 500;">${p.nombre || "-"}</td>
+        <td>${p.proveedor_nombre || "-"}</td>
+        <td style="text-align: center;">${p.stock_minimo || 0}</td>
         <td>
+          ${p.impuesto_nombre || "-"}
+          ${p.impuesto_porcentaje > 0 ? `<span style="color: #6c757d; font-size: 0.85em; margin-left: 4px;">(${p.impuesto_porcentaje}%)</span>` : ''}
+        </td>
+        <td style="white-space: nowrap;">${formatDate(p.fecha_vencimiento)}</td>
+        <td>
+          <span class="badge badge-secondary" style="padding: 4px 8px; border-radius: 4px; font-size: 0.85em;">
+            ${p.tipo || "PRODUCTO"}
+          </span>
+        </td>
+        <td>
+          <span class="badge ${estadoClass}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.85em;">
+            ${estadoText}
+          </span>
+        </td>
+        <td style="text-align: center;">
           <button class="btn btn-sm btn-secondary btn-editar" data-id="${
             p.id
-          }"><span class="material-icons">edit</span></button>
+          }" style="margin-right: 4px;" title="Editar">
+            <span class="material-icons" style="font-size: 18px;">edit</span>
+          </button>
           <button class="btn btn-sm btn-danger btn-eliminar" data-id="${
             p.id
-          }"><span class="material-icons">delete</span></button>
+          }" title="Eliminar">
+            <span class="material-icons" style="font-size: 18px;">delete</span>
+          </button>
         </td>
       </tr>
-    `
+    `;
+        }
       )
       .join("");
 

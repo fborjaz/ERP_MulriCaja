@@ -61,8 +61,30 @@ export class DatabaseService {
    */
   async getProductos(filtro = "") {
     // Usar tabla producto (singular) según esquema IMAXPOS
-    let sql =
-      "SELECT p.* FROM producto p WHERE p.producto_estatus = 1";
+    // Hacer JOINs para obtener proveedor, impuesto y otros datos
+    let sql = `
+      SELECT 
+        p.producto_id as id,
+        COALESCE(p.producto_codigo_interno, '') as codigo,
+        COALESCE(p.producto_codigo_barra, '') as codigo_barra,
+        COALESCE(p.producto_nombre, '') as nombre,
+        COALESCE(p.producto_descripcion, '') as descripcion,
+        COALESCE(p.producto_costo_unitario, 0) as precio_costo,
+        COALESCE(p.producto_stockminimo, 0) as stock_minimo,
+        COALESCE(p.producto_estatus, 1) as estatus,
+        COALESCE(p.producto_estado, 1) as estado,
+        COALESCE(p.producto_vencimiento, '') as fecha_vencimiento,
+        COALESCE(p.producto_tipo, 'PRODUCTO') as tipo,
+        COALESCE(p.producto_titulo_imagen, '') as imagen_titulo,
+        COALESCE(p.producto_descripcion_img, '') as imagen_url,
+        COALESCE(prov.nombre_comercial, prov.razon_social, 'Sin proveedor') as proveedor_nombre,
+        COALESCE(i.nombre_impuesto, 'Sin impuesto') as impuesto_nombre,
+        COALESCE(i.porcentaje_impuesto, 0) as impuesto_porcentaje
+      FROM producto p
+      LEFT JOIN proveedor prov ON prov.id_proveedor = p.producto_proveedor
+      LEFT JOIN impuestos i ON i.id_impuesto = p.producto_impuesto
+      WHERE COALESCE(p.producto_estatus, 1) = 1
+    `;
     let params = [];
 
     if (filtro) {
@@ -113,8 +135,22 @@ export class DatabaseService {
    */
   async getClientes() {
     // Usar tabla cliente (singular) según esquema IMAXPOS
+    // Mapear columnas para compatibilidad con las vistas
     return await this.query(
-      "SELECT * FROM cliente WHERE cliente_status = 1 ORDER BY nombre_comercial"
+      `SELECT 
+        id_cliente as id,
+        identificacion,
+        razon_social,
+        nombre_comercial as nombre,
+        tipo_cliente,
+        identificacion as cedula,
+        COALESCE(identificacion, ruc) as rnc,
+        COALESCE(telefono1, telefono2) as telefono,
+        email,
+        direccion
+      FROM cliente 
+      WHERE cliente_status = 1 
+      ORDER BY nombre_comercial`
     );
   }
 
@@ -124,9 +160,10 @@ export class DatabaseService {
    * @returns {Promise<Object>} Cliente
    */
   async getCliente(id) {
-    const result = await this.query("SELECT * FROM cliente WHERE id_cliente = ?", [
-      id,
-    ]);
+    const result = await this.query(
+      "SELECT * FROM cliente WHERE id_cliente = ?",
+      [id]
+    );
     return result[0];
   }
 

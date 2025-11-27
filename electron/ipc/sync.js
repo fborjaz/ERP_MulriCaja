@@ -278,12 +278,11 @@ export async function registerSyncHandlers(db) {
         config.auth_token,
         config.auto_sync ? 1 : 0,
         config.sync_interval || 300,
-        config.enabled ? 1 : 0
+        config.enabled !== undefined ? (config.enabled ? 1 : 0) : 1
       );
 
-      // Re-inicializar SyncEngine para que tome la nueva configuración
-      syncEngineInstance = null; 
-      await getSyncEngine(db);
+      // La configuración se guardó correctamente
+      // SyncEngine se inicializará dinámicamente cuando se necesite
 
       return { success: true, message: 'Configuración guardada' };
     } catch (error) {

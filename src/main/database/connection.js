@@ -39,11 +39,22 @@ function initDatabase() {
   if (fs.existsSync(schemaImaxposPath)) {
     try {
       const schemaImaxpos = fs.readFileSync(schemaImaxposPath, "utf8");
+      console.log("📋 Ejecutando schema IMAXPOS completo...");
       db.exec(schemaImaxpos);
       console.log("✅ Schema IMAXPOS completo ejecutado (154 tablas)");
       console.log("   📦 Desde:", schemaImaxposPath);
+      
+      // Verificar que la tabla usuario se creó correctamente
+      const usuarioTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='usuario'").get();
+      if (usuarioTable) {
+        console.log("✅ Tabla 'usuario' verificada correctamente");
+      } else {
+        console.warn("⚠️ Tabla 'usuario' no encontrada después de ejecutar schema");
+      }
     } catch (error) {
       console.error("❌ Error ejecutando schema_imaxpos_complete.sql:", error);
+      console.error("   Mensaje:", error.message);
+      console.error("   Stack:", error.stack);
       console.error("   Intentando con schema.sql fallback...");
       
       // Fallback al schema básico
@@ -152,6 +163,40 @@ function initDatabase() {
   if (missingTables.length > 0) {
     console.error("❌ TABLAS CRÍTICAS FALTANTES:", missingTables.join(", "));
     console.error("📋 Tablas existentes:", existingTableNames.join(", "));
+    
+    // Intentar crear tablas críticas faltantes manualmente (estructura idéntica a la nube)
+    if (missingTables.includes("usuario")) {
+      console.log("🔧 Creando tabla 'usuario' manualmente...");
+      try {
+        db.exec(`
+          CREATE TABLE IF NOT EXISTS usuario (
+            nUsuCodigo INTEGER PRIMARY KEY AUTOINCREMENT,
+            codigo VARCHAR(255) NOT NULL,
+            username VARCHAR(18) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            email_verified INTEGER NOT NULL DEFAULT 0,
+            password VARCHAR(50) NOT NULL,
+            activo INTEGER NOT NULL DEFAULT 1,
+            nombre VARCHAR(255) DEFAULT NULL,
+            phone VARCHAR(100) NOT NULL,
+            grupo INTEGER DEFAULT NULL,
+            id_local INTEGER DEFAULT NULL,
+            deleted INTEGER DEFAULT 0,
+            identificacion VARCHAR(50) DEFAULT NULL,
+            esSuper INTEGER DEFAULT NULL,
+            porcentaje_comision REAL DEFAULT NULL,
+            twosteps INTEGER NOT NULL DEFAULT 0,
+            imagen TEXT NOT NULL,
+            fingerprint TEXT DEFAULT NULL,
+            deviceId VARCHAR(250) DEFAULT NULL,
+            rawId VARCHAR(255) DEFAULT NULL
+          );
+        `);
+        console.log("✅ Tabla 'usuario' creada exitosamente (estructura compatible con nube)");
+      } catch (error) {
+        console.error("❌ Error creando tabla 'usuario':", error.message);
+      }
+    }
   } else {
     console.log("✅ Todas las tablas críticas verificadas");
   }

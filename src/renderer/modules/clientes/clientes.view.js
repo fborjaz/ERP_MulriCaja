@@ -151,10 +151,10 @@ export const ClientesView = {
       .map(
         (c) => `
       <tr>
-        <td>${c.id}</td>
-        <td>${c.nombre} ${c.apellido || ""}</td>
+        <td>${c.id || "-"}</td>
+        <td>${c.nombre || c.razon_social || "-"}</td>
         <td>${c.tipo_cliente || "Personal"}</td>
-        <td>${c.cedula || c.rnc || "-"}</td>
+        <td>${c.cedula || c.rnc || c.identificacion || "-"}</td>
         <td>${c.telefono || "-"}</td>
         <td>${c.email || "-"}</td>
         <td>
