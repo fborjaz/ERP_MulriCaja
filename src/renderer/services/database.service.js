@@ -60,26 +60,22 @@ export class DatabaseService {
    * @returns {Promise<Array>} Lista de productos
    */
   async getProductos(filtro = "") {
-    // Usar tabla producto (singular) según esquema IMAXPOS
-    // Hacer JOINs para obtener proveedor, impuesto y otros datos
+    // Replicar exactamente la estructura de la consulta PHP
+    // Columnas en el mismo orden que imaxpos2
     let sql = `
       SELECT 
         p.producto_id as id,
-        COALESCE(p.producto_codigo_interno, '') as codigo,
-        COALESCE(p.producto_codigo_barra, '') as codigo_barra,
-        COALESCE(p.producto_nombre, '') as nombre,
-        COALESCE(p.producto_descripcion, '') as descripcion,
-        COALESCE(p.producto_costo_unitario, 0) as precio_costo,
-        COALESCE(p.producto_stockminimo, 0) as stock_minimo,
-        COALESCE(p.producto_estatus, 1) as estatus,
-        COALESCE(p.producto_estado, 1) as estado,
-        COALESCE(p.producto_vencimiento, '') as fecha_vencimiento,
-        COALESCE(p.producto_tipo, 'PRODUCTO') as tipo,
-        COALESCE(p.producto_titulo_imagen, '') as imagen_titulo,
-        COALESCE(p.producto_descripcion_img, '') as imagen_url,
-        COALESCE(prov.nombre_comercial, prov.razon_social, 'Sin proveedor') as proveedor_nombre,
-        COALESCE(i.nombre_impuesto, 'Sin impuesto') as impuesto_nombre,
-        COALESCE(i.porcentaje_impuesto, 0) as impuesto_porcentaje
+        COALESCE(p.producto_codigo_barra, '') as producto_codigo_barra,
+        COALESCE(p.producto_nombre, '') as producto_nombre,
+        COALESCE(prov.nombre_comercial, prov.razon_social, '') as producto_proveedor,
+        COALESCE(p.producto_stockminimo, 0) as producto_stockminimo,
+        COALESCE(i.nombre_impuesto, '') as producto_impuesto,
+        COALESCE(p.producto_vencimiento, '') as producto_vencimiento,
+        COALESCE(p.producto_tipo, 'PRODUCTO') as producto_tipo,
+        COALESCE(p.producto_estado, 1) as producto_estado,
+        COALESCE(p.producto_descripcion_img, '') as producto_descripcion_img,
+        COALESCE(p.producto_titulo_imagen, '') as producto_titulo_imagen,
+        COALESCE(p.producto_costo_unitario, 0) as producto_costo_unitario
       FROM producto p
       LEFT JOIN proveedor prov ON prov.id_proveedor = p.producto_proveedor
       LEFT JOIN impuestos i ON i.id_impuesto = p.producto_impuesto
@@ -94,7 +90,7 @@ export class DatabaseService {
       params = [search, search, search];
     }
 
-    sql += " ORDER BY p.producto_nombre";
+    sql += " ORDER BY p.producto_id ASC, p.producto_nombre ASC";
     return await this.query(sql, params);
   }
 
