@@ -68,80 +68,85 @@
       <!-- Main Application -->
       <div id="main-app" class="main-app hidden">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
           <div class="sidebar-header">
-            <h2>ERP Multicajas</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h2 class="sidebar-title">ERP Multicajas</h2>
+              <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" title="Colapsar/Expandir menú">
+                <span class="material-icons">menu</span>
+              </button>
+            </div>
             <div class="user-info">
               <span class="material-icons">account_circle</span>
-              <div>
+              <div class="user-info-text">
                 <div id="user-name"></div>
                 <div id="caja-name" class="caja-badge"></div>
               </div>
             </div>
           </div>
           <nav class="sidebar-nav">
-            <a href="#" data-view="dashboard" class="nav-item active">
+            <a href="#" data-view="dashboard" class="nav-item active" title="Dashboard">
               <span class="material-icons">dashboard</span>
-              Dashboard
+              <span class="nav-item-text">Dashboard</span>
             </a>
-            <a href="#" data-view="ventas" class="nav-item">
+            <a href="#" data-view="ventas" class="nav-item" title="Ventas">
               <span class="material-icons">point_of_sale</span>
-              Ventas
+              <span class="nav-item-text">Ventas</span>
             </a>
-            <a href="#" data-view="productos" class="nav-item">
+            <a href="#" data-view="productos" class="nav-item" title="Productos">
               <span class="material-icons">inventory</span>
-              Productos
+              <span class="nav-item-text">Productos</span>
             </a>
-            <a href="#" data-view="clientes" class="nav-item">
+            <a href="#" data-view="clientes" class="nav-item" title="Clientes">
               <span class="material-icons">people</span>
-              Clientes
+              <span class="nav-item-text">Clientes</span>
             </a>
-            <a href="#" data-view="compras" class="nav-item">
+            <a href="#" data-view="compras" class="nav-item" title="Compras">
               <span class="material-icons">shopping_cart</span>
-              Compras
+              <span class="nav-item-text">Compras</span>
             </a>
-            <a href="#" data-view="inventario" class="nav-item">
+            <a href="#" data-view="inventario" class="nav-item" title="Inventario">
               <span class="material-icons">warehouse</span>
-              Inventario
+              <span class="nav-item-text">Inventario</span>
             </a>
-            <a href="#" data-view="despacho" class="nav-item">
+            <a href="#" data-view="despacho" class="nav-item" title="Despachos">
               <span class="material-icons">local_shipping</span>
-              Despachos
+              <span class="nav-item-text">Despachos</span>
             </a>
-            <a href="#" data-view="apartados" class="nav-item">
+            <a href="#" data-view="apartados" class="nav-item" title="Apartados">
               <span class="material-icons">bookmark</span>
-              Apartados
+              <span class="nav-item-text">Apartados</span>
             </a>
-            <a href="#" data-view="cotizaciones" class="nav-item">
+            <a href="#" data-view="cotizaciones" class="nav-item" title="Cotizaciones">
               <span class="material-icons">description</span>
-              Cotizaciones
+              <span class="nav-item-text">Cotizaciones</span>
             </a>
-            <a href="#" data-view="contabilidad" class="nav-item">
+            <a href="#" data-view="contabilidad" class="nav-item" title="Contabilidad">
               <span class="material-icons">account_balance</span>
-              Contabilidad
+              <span class="nav-item-text">Contabilidad</span>
             </a>
-            <a href="#" data-view="notas-credito" class="nav-item">
+            <a href="#" data-view="notas-credito" class="nav-item" title="Notas de Crédito">
               <span class="material-icons">assignment_return</span>
-              Notas de Crédito
+              <span class="nav-item-text">Notas de Crédito</span>
             </a>
-            <a href="#" data-view="reportes" class="nav-item">
+            <a href="#" data-view="reportes" class="nav-item" title="Reportes">
               <span class="material-icons">assessment</span>
-              Reportes
+              <span class="nav-item-text">Reportes</span>
             </a>
-            <a href="#" data-view="sincronizacion" class="nav-item">
+            <a href="#" data-view="sincronizacion" class="nav-item" title="Sincronización">
               <span class="material-icons">cloud_sync</span>
-              Sincronización
+              <span class="nav-item-text">Sincronización</span>
               <span id="sync-indicator" class="sync-indicator hidden"></span>
             </a>
-            <a href="#" data-view="configuracion" class="nav-item">
+            <a href="#" data-view="configuracion" class="nav-item" title="Configuración">
               <span class="material-icons">settings</span>
-              Configuración
+              <span class="nav-item-text">Configuración</span>
             </a>
           </nav>
           <div class="sidebar-footer">
             <button id="btn-logout" class="btn btn-secondary btn-block">
               <span class="material-icons">logout</span>
-              Cerrar Sesión
+              <span class="nav-item-text">Cerrar Sesión</span>
             </button>
           </div>
         </aside>

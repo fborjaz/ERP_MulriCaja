@@ -78,6 +78,9 @@ export const App = {
       });
     }
 
+    // Toggle sidebar
+    this.initSidebarToggle();
+
     // Atajos de teclado
     document.addEventListener("keydown", (e) => {
       // F1: Dashboard
@@ -95,7 +98,53 @@ export const App = {
         e.preventDefault();
         router.navigate("productos");
       }
+      // Ctrl+B o Cmd+B: Toggle sidebar
+      if ((e.ctrlKey || e.metaKey) && e.key === "b") {
+        e.preventDefault();
+        this.toggleSidebar();
+      }
     });
+  },
+
+  /**
+   * Inicializa el toggle del sidebar
+   */
+  initSidebarToggle() {
+    const sidebar = document.getElementById("sidebar");
+    const toggleBtn = document.getElementById("btn-toggle-sidebar");
+
+    if (!sidebar) return;
+
+    // Cargar estado guardado
+    const savedState = localStorage.getItem("sidebarCollapsed");
+    if (savedState === "true") {
+      sidebar.classList.add("collapsed");
+    }
+
+    // Event listener para el botón toggle en el sidebar
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", () => {
+        this.toggleSidebar();
+      });
+    }
+  },
+
+  /**
+   * Alterna el estado del sidebar (colapsado/expandido)
+   */
+  toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar) return;
+
+    const isCollapsed = sidebar.classList.contains("collapsed");
+
+    if (isCollapsed) {
+      sidebar.classList.remove("collapsed");
+      localStorage.setItem("sidebarCollapsed", "false");
+    } else {
+      sidebar.classList.add("collapsed");
+      localStorage.setItem("sidebarCollapsed", "true");
+    }
   },
 };
 

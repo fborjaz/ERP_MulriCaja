@@ -12,6 +12,80 @@ export const SyncView = {
 
   render() {
     return `
+      <style>
+        .readonly-field {
+          background-color: #f5f5f5 !important;
+          color: #6c757d !important;
+          cursor: not-allowed !important;
+          border-color: #dee2e6 !important;
+        }
+        .readonly-field:focus {
+          outline: none !important;
+          box-shadow: none !important;
+        }
+        .checkbox-label {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          cursor: pointer;
+          user-select: none;
+          padding: 8px 0;
+        }
+        .checkbox-label input[type="checkbox"] {
+          appearance: none;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          width: 20px;
+          height: 20px;
+          min-width: 20px;
+          min-height: 20px;
+          border: 2px solid #ccc;
+          border-radius: 4px;
+          cursor: pointer;
+          position: relative;
+          margin: 0;
+          flex-shrink: 0;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          background-color: white;
+          display: inline-block;
+          vertical-align: middle;
+        }
+        .checkbox-label input[type="checkbox"]:checked {
+          background-color: #6366f1;
+          border-color: #6366f1;
+        }
+        .checkbox-label input[type="checkbox"]:checked::after {
+          content: '✓';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          color: white;
+          font-size: 14px;
+          font-weight: bold;
+          line-height: 1;
+          display: block;
+        }
+        .checkbox-label input[type="checkbox"]:hover {
+          border-color: #6366f1;
+          transform: scale(1.05);
+        }
+        .checkbox-label input[type="checkbox"]:focus {
+          outline: 2px solid rgba(99, 102, 241, 0.3);
+          outline-offset: 2px;
+        }
+        .checkbox-label input[type="checkbox"]:active {
+          transform: scale(0.95);
+        }
+        .checkbox-text {
+          font-weight: 500;
+          color: #333;
+          transition: color 0.2s ease;
+        }
+        .checkbox-label:hover .checkbox-text {
+          color: #6366f1;
+        }
+      </style>
       <div class="sync-container">
         <!-- Estado de Conexión -->
         <div class="card">
@@ -94,44 +168,51 @@ export const SyncView = {
             <form id="form-sync-config">
               <div class="form-group">
                 <label for="api-url">URL del Servidor IMAXPOS</label>
-                <input type="text" id="api-url" class="form-control" 
-                  placeholder="https://api.imaxpos.com" required>
-                <small>URL base del API de IMAXPOS Cloud</small>
+                <input type="text" id="api-url" class="form-control readonly-field" 
+                  placeholder="https://api.imaxpos.com" readonly disabled>
+                <small style="color: #6c757d;">🔒 Configurado durante el setup inicial (no editable)</small>
               </div>
 
               <div class="form-group">
                 <label for="empresa-id">ID de Empresa</label>
-                <input type="number" id="empresa-id" class="form-control" 
-                  placeholder="1" required>
-                <small>ID de tu empresa en IMAXPOS Cloud</small>
+                <input type="number" id="empresa-id" class="form-control readonly-field" 
+                  placeholder="1" readonly disabled>
+                <small style="color: #6c757d;">🔒 Configurado durante el setup inicial (no editable)</small>
               </div>
 
               <div class="form-group">
                 <label for="auth-token">Token de Autenticación</label>
-                <input type="password" id="auth-token" class="form-control" 
-                  placeholder="Token de acceso" required>
-                <small>Token de autenticación proporcionado por IMAXPOS</small>
+                <div style="position: relative;">
+                  <input type="password" id="auth-token" class="form-control readonly-field" 
+                    placeholder="Token de acceso" readonly disabled>
+                  <button type="button" id="btn-show-token" class="btn btn-sm" 
+                    style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #6c757d; cursor: pointer;"
+                    title="Mostrar/Ocultar token">
+                    <span class="material-icons" style="font-size: 18px;">visibility</span>
+                  </button>
+                </div>
+                <small style="color: #6c757d;">🔒 Solo visualización (configurado durante el setup inicial)</small>
               </div>
 
               <div class="form-group">
-                <label>
+                <label class="checkbox-label" for="auto-sync">
                   <input type="checkbox" id="auto-sync" checked>
-                  Sincronización Automática
+                  <span class="checkbox-text">Sincronización Automática</span>
                 </label>
                 <small>Sincronizar automáticamente cada cierto tiempo</small>
               </div>
 
               <div class="form-group" id="sync-interval-group">
                 <label for="sync-interval">Intervalo de Sincronización (segundos)</label>
-                <input type="number" id="sync-interval" class="form-control" 
-                  value="300" min="60" max="3600">
-                <small>Tiempo entre sincronizaciones automáticas (mínimo 60 segundos)</small>
+                <input type="number" id="sync-interval" class="form-control readonly-field" 
+                  value="300" min="60" max="3600" readonly disabled>
+                <small style="color: #6c757d;">🔒 Configurado durante el setup inicial (no editable)</small>
               </div>
 
               <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
+                <button type="button" id="btn-save-auto-sync" class="btn btn-primary">
                   <span class="material-icons">save</span>
-                  Guardar Configuración
+                  Guardar Cambios
                 </button>
                 <button type="button" id="btn-test-connection" class="btn btn-secondary">
                   <span class="material-icons">check_circle</span>
@@ -233,9 +314,9 @@ export const SyncView = {
     document.getElementById('btn-check-connection')
       .addEventListener('click', () => this.checkConnection());
 
-    // Guardar configuración
-    document.getElementById('form-sync-config')
-      .addEventListener('submit', (e) => this.saveConfig(e));
+    // Guardar solo auto-sync (los demás campos son readonly)
+    document.getElementById('btn-save-auto-sync')
+      .addEventListener('click', () => this.saveAutoSync());
 
     // Probar conexión
     document.getElementById('btn-test-connection')
@@ -248,6 +329,22 @@ export const SyncView = {
         intervalGroup.style.display = e.target.checked ? 'block' : 'none';
       });
 
+    // Mostrar/Ocultar token (solo visualización, el campo es readonly)
+    const btnShowToken = document.getElementById('btn-show-token');
+    const authTokenInput = document.getElementById('auth-token');
+    if (btnShowToken && authTokenInput) {
+      btnShowToken.addEventListener('click', () => {
+        const icon = btnShowToken.querySelector('.material-icons');
+        if (authTokenInput.type === 'password') {
+          authTokenInput.type = 'text';
+          if (icon) icon.textContent = 'visibility_off';
+        } else {
+          authTokenInput.type = 'password';
+          if (icon) icon.textContent = 'visibility';
+        }
+      });
+    }
+
     // Refresh log
     document.getElementById('btn-refresh-log')
       .addEventListener('click', () => this.loadLog());
@@ -258,40 +355,75 @@ export const SyncView = {
       this.config = await syncService.getConfig();
 
       if (this.config) {
-        document.getElementById('api-url').value = this.config.api_url || '';
-        document.getElementById('empresa-id').value = this.config.empresa_id || '';
-        document.getElementById('auth-token').value = this.config.auth_token || '';
-        document.getElementById('auto-sync').checked = this.config.auto_sync === 1;
-        document.getElementById('sync-interval').value = this.config.sync_interval || 300;
+        // Cargar valores en campos readonly (solo visualización)
+        const apiUrlInput = document.getElementById('api-url');
+        const empresaIdInput = document.getElementById('empresa-id');
+        const authTokenInput = document.getElementById('auth-token');
+        const syncIntervalInput = document.getElementById('sync-interval');
+        
+        if (apiUrlInput) {
+          apiUrlInput.value = this.config.api_url || '';
+        }
+        if (empresaIdInput) {
+          empresaIdInput.value = this.config.empresa_id || '';
+        }
+        if (authTokenInput) {
+          authTokenInput.value = this.config.auth_token || '';
+        }
+        if (syncIntervalInput) {
+          syncIntervalInput.value = this.config.sync_interval || 300;
+        }
+
+        // Solo el checkbox de auto-sync es editable
+        const autoSyncCheckbox = document.getElementById('auto-sync');
+        if (autoSyncCheckbox) {
+          autoSyncCheckbox.checked = this.config.auto_sync === 1;
+        }
 
         const intervalGroup = document.getElementById('sync-interval-group');
-        intervalGroup.style.display = this.config.auto_sync ? 'block' : 'none';
+        if (intervalGroup) {
+          intervalGroup.style.display = this.config.auto_sync === 1 ? 'block' : 'none';
+        }
       }
     } catch (error) {
       console.error('Error cargando configuración:', error);
+      toast.error('Error al cargar la configuración de sincronización');
     }
   },
 
-  async saveConfig(e) {
-    e.preventDefault();
-
-    const config = {
-      api_url: document.getElementById('api-url').value.trim(),
-      empresa_id: parseInt(document.getElementById('empresa-id').value),
-      auth_token: document.getElementById('auth-token').value.trim(),
-      auto_sync: document.getElementById('auto-sync').checked,
-      sync_interval: parseInt(document.getElementById('sync-interval').value),
-      enabled: 1
-    };
+  async saveAutoSync() {
+    // Solo guardar el estado de auto_sync, los demás campos son readonly
+    const autoSync = document.getElementById('auto-sync').checked;
 
     try {
+      // Obtener la configuración actual completa
+      const currentConfig = await syncService.getConfig();
+      
+      if (!currentConfig) {
+        toast.error('No se encontró la configuración de sincronización');
+        return;
+      }
+
+      // Actualizar solo el auto_sync manteniendo los demás valores
+      const config = {
+        api_url: currentConfig.api_url,
+        empresa_id: currentConfig.empresa_id,
+        auth_token: currentConfig.auth_token,
+        auto_sync: autoSync,
+        sync_interval: currentConfig.sync_interval || 300,
+        enabled: currentConfig.enabled !== undefined ? currentConfig.enabled : 1
+      };
+
       await syncService.configure(config);
       this.config = config;
+      
+      toast.success('✅ Sincronización automática ' + (autoSync ? 'activada' : 'desactivada'));
       
       // Recargar estado
       await this.checkStatus();
     } catch (error) {
       console.error('Error guardando configuración:', error);
+      toast.error('Error al guardar la configuración');
     }
   },
 

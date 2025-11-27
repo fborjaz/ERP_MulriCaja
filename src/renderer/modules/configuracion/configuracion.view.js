@@ -13,6 +13,29 @@ export const ConfiguracionView = {
    */
   render() {
     return `
+      <style>
+        .readonly-field {
+          background-color: #f5f5f5 !important;
+          color: #6c757d !important;
+          cursor: not-allowed !important;
+          border-color: #dee2e6 !important;
+        }
+        .readonly-field:focus {
+          outline: none !important;
+          box-shadow: none !important;
+        }
+        .readonly-help-text {
+          color: #dc3545;
+          font-size: 0.875rem;
+          margin-top: 4px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .readonly-help-text .material-icons {
+          font-size: 16px;
+        }
+      </style>
       <div class="view-container">
         <h1>Configuración</h1>
         
@@ -25,23 +48,34 @@ export const ConfiguracionView = {
               <div class="form-grid">
                 <div class="form-group">
                   <label for="empresa-nombre">Nombre de la Empresa</label>
-                  <input type="text" id="empresa-nombre" class="form-control">
+                  <input type="text" id="empresa-nombre" class="form-control readonly-field" readonly disabled>
+                  <small class="readonly-help-text">
+                    <span class="material-icons">info</span>
+                    Comuníquese con soporte para que puedan cambiar este campo
+                  </small>
                 </div>
                 <div class="form-group">
                   <label for="empresa-rnc">RNC</label>
-                  <input type="text" id="empresa-rnc" class="form-control">
+                  <input type="text" id="empresa-rnc" class="form-control readonly-field" readonly disabled>
+                  <small class="readonly-help-text">
+                    <span class="material-icons">info</span>
+                    Comuníquese con soporte para que puedan cambiar este campo
+                  </small>
                 </div>
                 <div class="form-group">
                   <label for="empresa-telefono">Teléfono</label>
                   <input type="tel" id="empresa-telefono" class="form-control">
+                  <small style="color: #6c757d;">Puede editar este campo</small>
                 </div>
                 <div class="form-group">
                   <label for="empresa-email">Email</label>
                   <input type="email" id="empresa-email" class="form-control">
+                  <small style="color: #6c757d;">Puede editar este campo</small>
                 </div>
                 <div class="form-group full-width">
                   <label for="empresa-direccion">Dirección</label>
                   <textarea id="empresa-direccion" class="form-control" rows="3"></textarea>
+                  <small style="color: #6c757d;">Puede editar este campo</small>
                 </div>
               </div>
               <div class="form-actions">
@@ -104,19 +138,52 @@ export const ConfiguracionView = {
 
   /**
    * Carga configuración en los campos del formulario
+   * Carga desde la tabla configuraciones con las claves: empresa_nombre, empresa_rnc, etc.
    */
   async cargarConfiguracion() {
     try {
-      // Usando el método correcto expuesto en el preload
-      const config = await api.configGet('empresa');
-      if (config) {
-        document.getElementById("empresa-nombre").value = config.nombre || "";
-        document.getElementById("empresa-rnc").value = config.rnc || "";
-        document.getElementById("empresa-telefono").value = config.telefono || "";
-        document.getElementById("empresa-direccion").value = config.direccion || "";
-        document.getElementById("empresa-email").value = config.email || "";
+      // Cargar desde la tabla configuraciones directamente
+      const configRows = await api.dbQuery(`
+        SELECT config_key, config_value 
+        FROM configuraciones 
+        WHERE config_key IN ('empresa_nombre', 'empresa_rnc', 'empresa_telefono', 'empresa_direccion', 'empresa_email', 'EMPRESA_TELEFONO', 'EMPRESA_DIRECCION', 'EMPRESA_CORREO', 'EMPRESA_NOMBRE', 'EMPRESA_IDENTIFICACION')
+      `);
+      
+      // Convertir array a objeto
+      const config = {};
+      configRows.forEach((row) => {
+        const key = row.config_key.toLowerCase();
+        if (key.includes('empresa_nombre') || key.includes('nombre')) {
+          config.nombre = row.config_value || '';
+        } else if (key.includes('empresa_rnc') || key.includes('identificacion')) {
+          config.rnc = row.config_value || '';
+        } else if (key.includes('empresa_telefono') || key.includes('telefono')) {
+          config.telefono = row.config_value || '';
+        } else if (key.includes('empresa_direccion') || key.includes('direccion')) {
+          config.direccion = row.config_value || '';
+        } else if (key.includes('empresa_email') || key.includes('empresa_correo') || key.includes('correo')) {
+          config.email = row.config_value || '';
+        }
+      });
+
+      // Cargar valores en los campos
+      if (config.nombre) {
+        document.getElementById("empresa-nombre").value = config.nombre;
+      }
+      if (config.rnc) {
+        document.getElementById("empresa-rnc").value = config.rnc;
+      }
+      if (config.telefono) {
+        document.getElementById("empresa-telefono").value = config.telefono;
+      }
+      if (config.direccion) {
+        document.getElementById("empresa-direccion").value = config.direccion;
+      }
+      if (config.email) {
+        document.getElementById("empresa-email").value = config.email;
       }
 
+      // Cargar información del sistema
       const sysInfo = await api.getSystemInfo();
       if (sysInfo) {
         document.getElementById("sys-platform").textContent = sysInfo.platform;
@@ -131,21 +198,76 @@ export const ConfiguracionView = {
 
   /**
    * Guarda configuración
+   * Solo guarda los campos editables (Teléfono, Email, Dirección)
+   * Nombre y RNC vienen de la BD maestra y no se pueden modificar
    */
   async guardarConfiguracion() {
     try {
-      const config = {
-        nombre: document.getElementById("empresa-nombre").value,
-        rnc: document.getElementById("empresa-rnc").value,
-        telefono: document.getElementById("empresa-telefono").value,
-        direccion: document.getElementById("empresa-direccion").value,
-        email: document.getElementById("empresa-email").value
-      };
+      const telefono = document.getElementById("empresa-telefono").value.trim();
+      const direccion = document.getElementById("empresa-direccion").value.trim();
+      const email = document.getElementById("empresa-email").value.trim();
       
-      // Usando el método correcto expuesto en el preload
-      await api.configSet('empresa', config);
+      // Validar email si se proporciona
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        toast.error("El email ingresado no es válido");
+        return;
+      }
+      
+      // Guardar solo los campos editables en la tabla configuraciones
+      // Usar INSERT OR REPLACE para actualizar o crear si no existe
+      if (telefono) {
+        await api.dbQuery(
+          `INSERT OR REPLACE INTO configuraciones (config_key, config_value) 
+           VALUES ('empresa_telefono', ?)`,
+          [telefono]
+        );
+      }
+      
+      if (direccion) {
+        await api.dbQuery(
+          `INSERT OR REPLACE INTO configuraciones (config_key, config_value) 
+           VALUES ('empresa_direccion', ?)`,
+          [direccion]
+        );
+      }
+      
+      if (email) {
+        await api.dbQuery(
+          `INSERT OR REPLACE INTO configuraciones (config_key, config_value) 
+           VALUES ('empresa_email', ?)`,
+          [email]
+        );
+      }
 
-      toast.success("Configuración guardada exitosamente");
+      // También guardar en formato legacy si existe
+      if (telefono) {
+        await api.dbQuery(
+          `INSERT OR REPLACE INTO configuraciones (config_key, config_value) 
+           VALUES ('EMPRESA_TELEFONO', ?)`,
+          [telefono]
+        );
+      }
+      
+      if (direccion) {
+        await api.dbQuery(
+          `INSERT OR REPLACE INTO configuraciones (config_key, config_value) 
+           VALUES ('EMPRESA_DIRECCION', ?)`,
+          [direccion]
+        );
+      }
+      
+      if (email) {
+        await api.dbQuery(
+          `INSERT OR REPLACE INTO configuraciones (config_key, config_value) 
+           VALUES ('EMPRESA_CORREO', ?)`,
+          [email]
+        );
+      }
+
+      toast.success("✅ Configuración guardada exitosamente");
+      
+      // Recargar la configuración para mostrar los valores actualizados
+      await this.cargarConfiguracion();
     } catch (error) {
       console.error("Error guardando configuración:", error);
       toast.error("Error guardando configuración");
